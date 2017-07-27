@@ -32,4 +32,8 @@ public class DeviceItem {
     public int getRssi() {
         return rssi;
     }
+
+    public BluetoothDevice getBluetoothDevice() {
+        return bluetoothDevice;
+    }
 }
