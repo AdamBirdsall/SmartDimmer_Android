@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -43,6 +44,12 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     private ListAdapter_BTLE_Devices adapter;
 
     public Button btn_Scan;
+
+    // BottomSheetBehavior variable
+    private BottomSheetBehavior bottomSheetBehavior;
+    private Button expandBottomSheetButton;
+    private Button collapseBottomSheetButton;
+
     public TextView connectedLabel;
     public TextView brightnessLabel;
 
@@ -113,13 +120,47 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         findViewById(R.id.btn_scan).setOnClickListener(this);
 
         connectedLabel = (TextView) findViewById(R.id.connectedLabel);
-        brightnessLabel = (TextView) findViewById(R.id.brightnessLabel);
+//        brightnessLabel = (TextView) findViewById(R.id.brightnessLabel);
         brightnessSeekBar = (SeekBar) findViewById(R.id.brightnessSeekBar);
 
         brightnessSeekBar.setOnSeekBarChangeListener(this);
 
+        bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheetLayout));
+// Capturing the callbacks for bottom sheet
+        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(View bottomSheet, int newState) {
+
+                // Check Logs to see how bottom sheets behaves
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        Log.e("Bottom Sheet Behaviour", "STATE_COLLAPSED");
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        Log.e("Bottom Sheet Behaviour", "STATE_DRAGGING");
+                        break;
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        Log.e("Bottom Sheet Behaviour", "STATE_EXPANDED");
+                        break;
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        Log.e("Bottom Sheet Behaviour", "STATE_HIDDEN");
+                        break;
+                    case BottomSheetBehavior.STATE_SETTLING:
+                        Log.e("Bottom Sheet Behaviour", "STATE_SETTLING");
+                        break;
+                }
+            }
+
+
+            @Override
+            public void onSlide(View bottomSheet, float slideOffset) {
+
+            }
+        });
+
         startScan();
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -171,7 +212,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_groups) {
             return true;
         }
 
@@ -267,19 +308,19 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
         switch (v.getId()) {
             case R.id.btn_scan:
-
-                if (btn_Scan.getText().equals("Scan Again")) {
-
-                    if (!mBLTLeScanner.isScanning()) {
-                        startScan();
-                    } else {
-                        stopScan();
-                    }
-                }
-                if (btn_Scan.getText().equals("Disconnect")) {
-                    Utils.toast(getApplicationContext(), "Disconnecting..");
-                    mBLTLeScanner.disconnectFromDevice();
-                }
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+//                if (btn_Scan.getText().equals("Scan Again")) {
+//
+//                    if (!mBLTLeScanner.isScanning()) {
+//                        startScan();
+//                    } else {
+//                        stopScan();
+//                    }
+//                }
+//                if (btn_Scan.getText().equals("Disconnect")) {
+//                    Utils.toast(getApplicationContext(), "Disconnecting..");
+//                    mBLTLeScanner.disconnectFromDevice();
+//                }
 
                 break;
             default:
