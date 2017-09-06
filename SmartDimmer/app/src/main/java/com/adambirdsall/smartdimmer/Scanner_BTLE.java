@@ -165,8 +165,8 @@ public class Scanner_BTLE {
             ma.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int progressValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 1);
-                    ma.brightnessSeekBar.setProgress(progressValue);
+//                    int progressValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 1);
+//                    ma.brightnessSeekBar.setProgress(progressValue);
                 }
             });
         }

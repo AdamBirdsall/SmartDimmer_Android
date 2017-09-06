@@ -1,8 +1,14 @@
 <resources>
-    <string name="app_name">Smart Dimmer</string>
+    <string name="app_name">picture here</string>
     <string name="title_activity_device_scan">DeviceScanActivity</string>
     <string name="disconnect">Disconnect</string>
     <string name="scanAgain">Scan Again</string>
     <string name="connectedTo">Connected to device</string>
     <string name="notConnected">Not Connected</string>
+
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_groups">Groups</string>
 </resources>
