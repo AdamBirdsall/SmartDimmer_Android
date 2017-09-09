@@ -126,7 +126,6 @@ public class Scanner_BTLE {
                     @Override
                     public void run() {
                         ma.connectedLabel.setText(R.string.connectedTo);
-                        ma.btn_Scan.setText(R.string.disconnect);
                         ma.mainListView.setClickable(false);
                         ma.mainListView.setEnabled(false);
                     }
@@ -141,7 +140,6 @@ public class Scanner_BTLE {
                     @Override
                     public void run() {
                         ma.connectedLabel.setText(R.string.notConnected);
-                        ma.btn_Scan.setText(R.string.scanAgain);
                         ma.mainListView.setClickable(true);
                         ma.mainListView.setEnabled(true);
                     }

@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
@@ -43,12 +44,8 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     private ArrayList<DeviceItem> mBTDevicesArrayList;
     private ListAdapter_BTLE_Devices adapter;
 
-    public Button btn_Scan;
-
     // BottomSheetBehavior variable
     private BottomSheetBehavior bottomSheetBehavior;
-    private Button expandBottomSheetButton;
-    private Button collapseBottomSheetButton;
 
     public TextView connectedLabel;
     public TextView brightnessLabel;
@@ -69,6 +66,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_discovery);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(Color.parseColor("#289dd8"));
         setSupportActionBar(toolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -116,17 +114,15 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         scrollView = (ScrollView) findViewById(R.id.scrollView);
         scrollView.addView(mainListView);
 
-        btn_Scan = (Button) findViewById(R.id.btn_scan);
-        findViewById(R.id.btn_scan).setOnClickListener(this);
+        findViewById(R.id.disconnect_button).setOnClickListener(this);
 
         connectedLabel = (TextView) findViewById(R.id.connectedLabel);
-//        brightnessLabel = (TextView) findViewById(R.id.brightnessLabel);
+        brightnessLabel = (TextView) findViewById(R.id.brightnessLabel);
         brightnessSeekBar = (SeekBar) findViewById(R.id.brightnessSeekBar);
 
         brightnessSeekBar.setOnSeekBarChangeListener(this);
 
         bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheetLayout));
-// Capturing the callbacks for bottom sheet
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(View bottomSheet, int newState) {
@@ -134,23 +130,17 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
                 // Check Logs to see how bottom sheets behaves
                 switch (newState) {
                     case BottomSheetBehavior.STATE_COLLAPSED:
-                        Log.e("Bottom Sheet Behaviour", "STATE_COLLAPSED");
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
-                        Log.e("Bottom Sheet Behaviour", "STATE_DRAGGING");
                         break;
                     case BottomSheetBehavior.STATE_EXPANDED:
-                        Log.e("Bottom Sheet Behaviour", "STATE_EXPANDED");
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
-                        Log.e("Bottom Sheet Behaviour", "STATE_HIDDEN");
                         break;
                     case BottomSheetBehavior.STATE_SETTLING:
-                        Log.e("Bottom Sheet Behaviour", "STATE_SETTLING");
                         break;
                 }
             }
-
 
             @Override
             public void onSlide(View bottomSheet, float slideOffset) {
@@ -199,20 +189,16 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_groups) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             return true;
         }
 
@@ -299,29 +285,22 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        brightnessLabel.setText(String.valueOf(progress));
-        mBLTLeScanner.writeCustomCharacteristic(progress);
+        try {
+            brightnessLabel.setText(String.valueOf(progress));
+            mBLTLeScanner.writeCustomCharacteristic(progress);
+        } catch (Exception e) {
+
+        }
     }
 
     @Override
     public void onClick(View v) {
 
         switch (v.getId()) {
-            case R.id.btn_scan:
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-//                if (btn_Scan.getText().equals("Scan Again")) {
-//
-//                    if (!mBLTLeScanner.isScanning()) {
-//                        startScan();
-//                    } else {
-//                        stopScan();
-//                    }
-//                }
-//                if (btn_Scan.getText().equals("Disconnect")) {
-//                    Utils.toast(getApplicationContext(), "Disconnecting..");
-//                    mBLTLeScanner.disconnectFromDevice();
-//                }
-
+            case R.id.disconnect_button:
+                Utils.toast(getApplicationContext(), "Disconnecting..");
+//                mBLTLeScanner.disconnectFromDevice();
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 break;
             default:
                 break;
@@ -355,8 +334,6 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     }
 
     public void startScan() {
-        btn_Scan.setText("Scanning...");
-
         mainListView.setEnabled(false);
 
         mBTDevicesArrayList.clear();
@@ -368,8 +345,6 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     }
 
     public void stopScan() {
-        btn_Scan.setText("Scan Again");
-
         mainListView.setEnabled(true);
 
         mBLTLeScanner.stop();
