@@ -1,4 +1,4 @@
-package com.adambirdsall.smartdimmer;
+package com.adambirdsall.smartdimmer.BLE;
 
 import android.app.Activity;
 import android.content.Context;
@@ -6,7 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.TextView;
+
+import com.adambirdsall.smartdimmer.R;
 
 import java.util.ArrayList;
 
@@ -47,9 +50,6 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
         } else {
             tv_name.setText("No Name");
         }
-
-        TextView tv_rssi = (TextView) convertView.findViewById(R.id.tv_rssi);
-        tv_rssi.setText("RSSI: " + Integer.toString(rssi));
 
         TextView tv_macAddress = (TextView) convertView.findViewById(R.id.tv_macaddr);
         if (address != null && address.length() > 0) {

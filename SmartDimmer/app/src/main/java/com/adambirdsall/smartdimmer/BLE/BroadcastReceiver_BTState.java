@@ -1,9 +1,11 @@
-package com.adambirdsall.smartdimmer;
+package com.adambirdsall.smartdimmer.BLE;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
+import com.adambirdsall.smartdimmer.Utils.Utils;
 
 /**
  * Created by AdamBirdsall on 7/25/17.

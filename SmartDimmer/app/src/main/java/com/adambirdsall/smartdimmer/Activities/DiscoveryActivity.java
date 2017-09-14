@@ -1,4 +1,4 @@
-package com.adambirdsall.smartdimmer;
+package com.adambirdsall.smartdimmer.Activities;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -11,9 +11,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -21,15 +19,23 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.adambirdsall.smartdimmer.BLE.BroadcastReceiver_BTState;
+import com.adambirdsall.smartdimmer.BLE.DeviceItem;
+import com.adambirdsall.smartdimmer.BLE.ListAdapter_BTLE_Devices;
+import com.adambirdsall.smartdimmer.BLE.Scanner_BTLE;
+import com.adambirdsall.smartdimmer.R;
+import com.adambirdsall.smartdimmer.Utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +49,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
     private ArrayList<DeviceItem> mBTDevicesArrayList;
     private ListAdapter_BTLE_Devices adapter;
+    private ArrayList<DeviceItem> selectedGroupsArrayList;
 
     // BottomSheetBehavior variable
     private BottomSheetBehavior bottomSheetBehavior;
@@ -52,6 +59,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
     public SeekBar brightnessSeekBar;
     public ScrollView scrollView;
+    public Toolbar mainToolbar;
 
     public ListView mainListView;
 
@@ -65,13 +73,13 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_discovery);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(Color.parseColor("#289dd8"));
-        setSupportActionBar(toolbar);
+        mainToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mainToolbar.setTitleTextColor(Color.parseColor("#289dd8"));
+        setSupportActionBar(mainToolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, mainToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -109,6 +117,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
+//        mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         mainListView.setOnItemClickListener(this);
 
         scrollView = (ScrollView) findViewById(R.id.scrollView);
@@ -130,10 +139,15 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
                 // Check Logs to see how bottom sheets behaves
                 switch (newState) {
                     case BottomSheetBehavior.STATE_COLLAPSED:
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
+                        findViewById(R.id.nav_view).setEnabled(true);
+                        mBLTLeScanner.disconnectFromDevice();
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
                         break;
                     case BottomSheetBehavior.STATE_EXPANDED:
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
+                        findViewById(R.id.nav_view).setEnabled(false);
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
                         break;
@@ -144,7 +158,8 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
             @Override
             public void onSlide(View bottomSheet, float slideOffset) {
-
+                findViewById(R.id.bg).setVisibility(View.VISIBLE);
+                findViewById(R.id.bg).setAlpha(slideOffset);
             }
         });
 
@@ -178,54 +193,14 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     }
 
     @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_groups) {
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
-
         registerReceiver(mBTStateUpdateReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
     }
 
@@ -244,7 +219,6 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onStop() {
         super.onStop();
-
         unregisterReceiver(mBTStateUpdateReceiver);
         stopScan();
     }
@@ -266,48 +240,187 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-
     /************************************************************************************************/
 
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        DeviceItem deviceItem = (DeviceItem) parent.getItemAtPosition(position);
-
-        mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
-    }
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-    }
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-    }
-
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        try {
-            brightnessLabel.setText(String.valueOf(progress));
-            mBLTLeScanner.writeCustomCharacteristic(progress);
-        } catch (Exception e) {
-
-        }
-    }
-
+    /**
+     * On Button Click
+     *
+     * @param v
+     */
     @Override
     public void onClick(View v) {
 
         switch (v.getId()) {
             case R.id.disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
-//                mBLTLeScanner.disconnectFromDevice();
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                boolean didDisconnect = mBLTLeScanner.disconnectFromDevice();
+                if (didDisconnect) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    // TODO: Groups button rename
+                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Scan");
+                    mainListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+                } else {
+                    // Failed to disconnect
+                }
                 break;
             default:
                 break;
         }
     }
 
+    /**
+     * On List View Item Click
+     *
+     * @param parent
+     * @param view
+     * @param position
+     * @param id
+     */
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+        String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
+        DeviceItem deviceItem = (DeviceItem) parent.getItemAtPosition(position);
+//        CheckBox checkBox = (CheckBox) parent.getItemAtP
+
+        // If you want to select a single device
+        if (buttonTitle.equals("Groups")) {
+            boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+            if (didConnect) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                // Failed to connect
+            }
+        }
+        // If you want to select multiple devices
+        else if (buttonTitle.equals("Connect")) {
+            // Add device to an arraylist
+
+//            CheckBox checkBox = (CheckBox) parent.findViewById(R.id.checkBox);
+//            checkBox.setChecked(!checkBox.isChecked());
+        } else {
+            boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+            if (didConnect) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                // Failed to connect
+            }
+        }
+    }
+
+    /**
+     * On Topbar Menu Item Click
+     *
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_groups) {
+            // If the title of the button is 'Groups'
+            // TODO: groups button rename
+            if (item.getTitle().equals("Scan")) {
+                startScan();
+//                item.setTitle("Connect");
+//                mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+
+            } else { // Else if the title is 'Connect'
+
+                SparseBooleanArray checked = mainListView.getCheckedItemPositions();
+                if (checked.size() == 0) {
+                    Utils.toast(getApplicationContext(), "Please select a device");
+                    return true;
+                }
+                ArrayList<DeviceItem> selectedItems = new ArrayList<>();
+                for (int i = 0; i < checked.size(); i++) {
+                    // Item position in adapter
+                    int position = checked.keyAt(i);
+                    if (checked.valueAt(i))
+                        selectedItems.add(adapter.getItem(position));
+                }
+
+                for (DeviceItem deviceItem : selectedItems) {
+                    boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+                    if (didConnect) {
+
+                    } else {
+
+                    }
+                }
+
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * On SideMenu item selected
+     *
+     * @param item
+     * @return
+     */
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_help) {
+            // Handle the camera action
+        } else if (id == R.id.nav_setup) {
+
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    /**
+     * Go back button pressed in the SideMenu
+     */
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    /**
+     * Functions for the seekbar and changing brightness value
+     *
+     * @param seekBar
+     */
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+    }
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+    }
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        try {
+            brightnessLabel.setText(String.valueOf(progress));
+            //TODO: groups button rename
+            if (mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString().equals("Scan")) {
+                mBLTLeScanner.writeCustomCharacteristic(progress);
+            } else {
+//                for
+            }
+        } catch (Exception e) {
+
+        }
+    }
 
 /************************************************************************************************/
     /**

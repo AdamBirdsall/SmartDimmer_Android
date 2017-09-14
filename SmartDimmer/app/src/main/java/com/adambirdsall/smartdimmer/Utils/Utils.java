@@ -1,4 +1,4 @@
-package com.adambirdsall.smartdimmer;
+package com.adambirdsall.smartdimmer.Utils;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.view.Gravity;
 import android.widget.Toast;
+
+import com.adambirdsall.smartdimmer.Activities.DiscoveryActivity;
 
 /**
  * Created by AdamBirdsall on 7/25/17.

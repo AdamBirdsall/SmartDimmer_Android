@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#bfbfbf"
-    tools:context="com.adambirdsall.smartdimmer.DiscoveryActivity">
+    android:background="#e6e6e6"
+    tools:context="com.adambirdsall.smartdimmer.Activities.DiscoveryActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -17,8 +17,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#ffffff"
-            
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:title="Brilliance LED" />
 
     </android.support.design.widget.AppBarLayout>
 

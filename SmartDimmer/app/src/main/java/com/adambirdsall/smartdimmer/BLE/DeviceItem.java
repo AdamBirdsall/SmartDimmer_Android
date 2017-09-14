@@ -1,8 +1,6 @@
-package com.adambirdsall.smartdimmer;
+package com.adambirdsall.smartdimmer.BLE;
 
 import android.bluetooth.BluetoothDevice;
-import android.net.NetworkInfo;
-import android.os.ParcelUuid;
 
 /**
  * Created by AdamBirdsall on 7/18/17.

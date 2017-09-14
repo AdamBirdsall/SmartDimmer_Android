@@ -1,4 +1,4 @@
-package com.adambirdsall.smartdimmer;
+package com.adambirdsall.smartdimmer.BLE;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,7 +10,10 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.os.Handler;
 
-import java.util.List;
+import com.adambirdsall.smartdimmer.Activities.DiscoveryActivity;
+import com.adambirdsall.smartdimmer.R;
+import com.adambirdsall.smartdimmer.Utils.Utils;
+
 import java.util.UUID;
 
 /**
@@ -99,13 +102,23 @@ public class Scanner_BTLE {
         }
     };
 
-    public void disconnectFromDevice() {
-        mBluetoothGatt.disconnect();
+    public boolean disconnectFromDevice() {
+        try {
+            mBluetoothGatt.disconnect();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    public void connectToDevice(BluetoothDevice bluetoothDevice, Context context) {
-        String bluetoothName = bluetoothDevice.getName();
-        BluetoothGatt bluetoothGatt = bluetoothDevice.connectGatt(context, false, btleGattCallback);
+    public boolean connectToDevice(BluetoothDevice bluetoothDevice, Context context) {
+        try {
+            String bluetoothName = bluetoothDevice.getName();
+            BluetoothGatt bluetoothGatt = bluetoothDevice.connectGatt(context, false, btleGattCallback);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private final BluetoothGattCallback btleGattCallback = new BluetoothGattCallback() {
