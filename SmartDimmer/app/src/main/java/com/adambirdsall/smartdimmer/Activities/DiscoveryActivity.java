@@ -10,8 +10,12 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -34,17 +38,23 @@ import com.adambirdsall.smartdimmer.BLE.BroadcastReceiver_BTState;
 import com.adambirdsall.smartdimmer.BLE.DeviceItem;
 import com.adambirdsall.smartdimmer.BLE.ListAdapter_BTLE_Devices;
 import com.adambirdsall.smartdimmer.BLE.Scanner_BTLE;
+import com.adambirdsall.smartdimmer.Fragments.DiscoveryFragment;
+import com.adambirdsall.smartdimmer.Fragments.HelpFragment;
+import com.adambirdsall.smartdimmer.Fragments.SetupFragment;
 import com.adambirdsall.smartdimmer.R;
+import com.adambirdsall.smartdimmer.Utils.EventListener;
 import com.adambirdsall.smartdimmer.Utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class DiscoveryActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener, SeekBar.OnSeekBarChangeListener, NavigationView.OnNavigationItemSelectedListener {
+public class DiscoveryActivity extends AppCompatActivity implements EventListener, View.OnClickListener, AdapterView.OnItemClickListener, SeekBar.OnSeekBarChangeListener, NavigationView.OnNavigationItemSelectedListener {
 
     private final static String TAG = DiscoveryActivity.class.getSimpleName();
 
     public static final int REQUEST_ENABLE_BT = 1;
+
+    public boolean setupFlag = false;
 
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
     private ArrayList<DeviceItem> mBTDevicesArrayList;
@@ -53,6 +63,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
     // BottomSheetBehavior variable
     private BottomSheetBehavior bottomSheetBehavior;
+    private BottomSheetBehavior setup_bottomSheet;
 
     public TextView connectedLabel;
     public TextView brightnessLabel;
@@ -73,6 +84,7 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_discovery);
+
         mainToolbar = (Toolbar) findViewById(R.id.toolbar);
         mainToolbar.setTitleTextColor(Color.parseColor("#289dd8"));
         setSupportActionBar(mainToolbar);
@@ -106,6 +118,14 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
                 builder.show();
             }
         }
+
+        displayFragment(R.id.nav_discover);
+    }
+
+    @Override
+    public void discoveryVariables() {
+
+        setupFlag = false;
 
         mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
         mBLTLeScanner = new Scanner_BTLE(this, 4000, -75);
@@ -166,6 +186,71 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         startScan();
     }
 
+    @Override
+    public void setupVariables() {
+
+        setupFlag = true;
+
+        mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
+        mBLTLeScanner = new Scanner_BTLE(this, 4000, -75);
+
+        mBTDevicesHashMap = new HashMap<>();
+        mBTDevicesArrayList = new ArrayList<>();
+
+        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList);
+
+        mainListView = new ListView(this);
+        mainListView.setAdapter(adapter);
+//        mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        mainListView.setOnItemClickListener(this);
+
+        scrollView = (ScrollView) findViewById(R.id.setupScrollView);
+        scrollView.addView(mainListView);
+
+        findViewById(R.id.setup_disconnect_button).setOnClickListener(this);
+        findViewById(R.id.lowest_button).setOnClickListener(this);
+        findViewById(R.id.highest_button).setOnClickListener(this);
+
+        connectedLabel = (TextView) findViewById(R.id.setup_connectedLabel);
+
+        setup_bottomSheet = BottomSheetBehavior.from(findViewById(R.id.setupSheetLayout));
+        setup_bottomSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                // Check Logs to see how bottom sheets behaves
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
+                        findViewById(R.id.nav_view).setEnabled(true);
+                        mBLTLeScanner.disconnectFromDevice();
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        break;
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
+                        findViewById(R.id.nav_view).setEnabled(false);
+                        break;
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        break;
+                    case BottomSheetBehavior.STATE_SETTLING:
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                findViewById(R.id.bg).setVisibility(View.VISIBLE);
+                findViewById(R.id.bg).setAlpha(slideOffset);
+            }
+        });
+
+        startScan();
+    }
+
+    @Override
+    public void helpVariables() {
+
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -250,12 +335,15 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onClick(View v) {
 
+        boolean didDisconnect = false;
+
         switch (v.getId()) {
             case R.id.disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
-                boolean didDisconnect = mBLTLeScanner.disconnectFromDevice();
+                didDisconnect = mBLTLeScanner.disconnectFromDevice();
                 if (didDisconnect) {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
                     // TODO: Groups button rename
                     mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Scan");
                     mainListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -263,6 +351,26 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
                 } else {
                     // Failed to disconnect
                 }
+                break;
+            case R.id.setup_disconnect_button:
+                Utils.toast(getApplicationContext(), "Disconnecting..");
+                didDisconnect = mBLTLeScanner.disconnectFromDevice();
+                if (didDisconnect) {
+                    setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+                    // TODO: Groups button rename
+                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Scan");
+                    mainListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+                } else {
+                    // Failed to disconnect
+                }
+                break;
+            case R.id.lowest_button:
+                System.out.print("");
+                break;
+            case R.id.highest_button:
+                System.out.print("");
                 break;
             default:
                 break;
@@ -288,7 +396,11 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         if (buttonTitle.equals("Groups")) {
             boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
             if (didConnect) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                if (setupFlag) {
+                    setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+                } else {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }
             } else {
                 // Failed to connect
             }
@@ -302,7 +414,11 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
         } else {
             boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
             if (didConnect) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                if (setupFlag) {
+                    setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+                } else {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }
             } else {
                 // Failed to connect
             }
@@ -369,18 +485,37 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
 
-        if (id == R.id.nav_help) {
-            // Handle the camera action
-        } else if (id == R.id.nav_setup) {
+        //calling the method displayselectedscreen and passing the id of selected menu
+        displayFragment(item.getItemId());
+        //make this method blank
+        return true;
+    }
 
+    private void displayFragment(int id) {
+
+        Fragment fragment = null;
+
+        switch (id) {
+            case R.id.nav_discover:
+                fragment = new DiscoveryFragment();
+                break;
+            case R.id.nav_help:
+                fragment = new HelpFragment();
+                break;
+            case R.id.nav_setup:
+                fragment = new SetupFragment();
+                break;
+        }
+
+        if (fragment != null) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.replace(R.id.content_frame, fragment);
+            ft.commit();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
     /**
@@ -437,8 +572,11 @@ public class DiscoveryActivity extends AppCompatActivity implements View.OnClick
 
             System.out.println(newDevice);
 
-            mBTDevicesHashMap.put(address, newDevice);
-            mBTDevicesArrayList.add(newDevice);
+            if (newDevice.getName() != null && newDevice.getName().startsWith("SmartDimmer")) {
+                mBTDevicesHashMap.put(address, newDevice);
+                mBTDevicesArrayList.add(newDevice);
+            }
+
         } else {
             mBTDevicesHashMap.get(address).setRSSI(new_rssi);
         }

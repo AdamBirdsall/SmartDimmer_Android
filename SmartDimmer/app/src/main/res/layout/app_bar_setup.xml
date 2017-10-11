@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#e6e6e6"
-    tools:context="com.adambirdsall.smartdimmer.Activities.DiscoveryActivity">
+    tools:context="com.adambirdsall.smartdimmer.Activities.SetupActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -17,17 +17,15 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#ffffff"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
-            <!--app:title="Brilliance LED" />-->
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:title="Brilliance LED" />
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_main" />
+    <include layout="@layout/activity_setup" />
 
     <!-- Bottom Sheet Content -->
-    <include layout="@layout/content_bottom_sheet" />
-
-    <include layout="@layout/setup_bottom_sheet" />
+    <!--<include layout="@layout/content_bottom_sheet" />-->
 
 
 </android.support.design.widget.CoordinatorLayout>
