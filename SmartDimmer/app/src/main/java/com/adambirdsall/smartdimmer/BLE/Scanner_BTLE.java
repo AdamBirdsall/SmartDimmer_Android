@@ -14,6 +14,7 @@ import com.adambirdsall.smartdimmer.Activities.DiscoveryActivity;
 import com.adambirdsall.smartdimmer.R;
 import com.adambirdsall.smartdimmer.Utils.Utils;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -102,22 +103,21 @@ public class Scanner_BTLE {
         }
     };
 
-    public boolean disconnectFromDevice() {
+    public boolean disconnectFromDevice(BluetoothGatt disconnectDevice) {
         try {
-            mBluetoothGatt.disconnect();
+            disconnectDevice.disconnect();
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean connectToDevice(BluetoothDevice bluetoothDevice, Context context) {
+    public BluetoothGatt connectToDevice(BluetoothDevice bluetoothDevice, Context context) {
         try {
             String bluetoothName = bluetoothDevice.getName();
-            BluetoothGatt bluetoothGatt = bluetoothDevice.connectGatt(context, false, btleGattCallback);
-            return true;
+            return bluetoothDevice.connectGatt(context, false, btleGattCallback);
         } catch (Exception e) {
-            return false;
+            return null;
         }
     }
 
@@ -138,9 +138,16 @@ public class Scanner_BTLE {
                 ma.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        String buttonTitle = ma.mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
                         ma.connectedLabel.setText(R.string.connectedTo);
-                        ma.mainListView.setClickable(false);
-                        ma.mainListView.setEnabled(false);
+
+                        if (buttonTitle.equals("Groups")) {
+                            ma.mainListView.setClickable(false);
+                            ma.mainListView.setEnabled(false);
+                        } else {
+                            ma.mainListView.setClickable(true);
+                            ma.mainListView.setEnabled(true);
+                        }
                     }
                 });
 
@@ -172,14 +179,6 @@ public class Scanner_BTLE {
             final BluetoothGattCharacteristic characteristic = service.getCharacteristic(writeUUID);
             readCharacteristic = service.getCharacteristic(readUUID);
             writeCharacteristic = characteristic;
-
-            ma.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-//                    int progressValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 1);
-//                    ma.brightnessSeekBar.setProgress(progressValue);
-                }
-            });
         }
     };
 
@@ -201,12 +200,12 @@ public class Scanner_BTLE {
         }
     }
 
-    public void writeCustomCharacteristic(int value) {
-        if (bluetoothAdapter == null || mBluetoothGatt == null) {
+    public void writeCustomCharacteristic(int value, BluetoothGatt newDevice) {
+        if (bluetoothAdapter == null || mBluetoothGatt == null || newDevice == null) {
             return;
         }
         /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = mBluetoothGatt.getService(serviceUUID);
+        BluetoothGattService mCustomService = newDevice.getService(serviceUUID);
         if(mCustomService == null){
             return;
         }
@@ -216,7 +215,7 @@ public class Scanner_BTLE {
         mWriteCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
 
 
-        if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)){
+        if(!newDevice.writeCharacteristic(mWriteCharacteristic)){
 
         } else {
             System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");

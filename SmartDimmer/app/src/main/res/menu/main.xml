@@ -4,7 +4,7 @@
     <item
         android:id="@+id/action_groups"
         android:orderInCategory="100"
-        android:title="Scan"
+        android:title="Groups"
         app:showAsAction="always" />
 
 </menu>

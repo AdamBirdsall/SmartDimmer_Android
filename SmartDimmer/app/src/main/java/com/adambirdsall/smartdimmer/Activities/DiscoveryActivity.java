@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -47,6 +48,7 @@ import com.adambirdsall.smartdimmer.Utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class DiscoveryActivity extends AppCompatActivity implements EventListener, View.OnClickListener, AdapterView.OnItemClickListener, SeekBar.OnSeekBarChangeListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -77,6 +79,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
 
     private Scanner_BTLE mBLTLeScanner;
+
+    private List<BluetoothGatt> groupsList;
+    private BluetoothGatt mainBleGatt;
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
@@ -127,6 +132,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         setupFlag = false;
 
+        groupsList = new ArrayList<>();
+
         mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
         mBLTLeScanner = new Scanner_BTLE(this, 4000, -75);
 
@@ -161,7 +168,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
                         findViewById(R.id.nav_view).setEnabled(true);
-                        mBLTLeScanner.disconnectFromDevice();
+                        // TODO: Groups disconnect
+                        mBLTLeScanner.disconnectFromDevice(mainBleGatt);
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
                         break;
@@ -222,7 +230,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
                         findViewById(R.id.nav_view).setEnabled(true);
-                        mBLTLeScanner.disconnectFromDevice();
+                        mBLTLeScanner.disconnectFromDevice(mainBleGatt);
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
                         break;
@@ -250,6 +258,16 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     public void helpVariables() {
 
+    }
+
+    @Override
+    public void addToGroupsList(BluetoothGatt newDevice) {
+        groupsList.add(newDevice);
+    }
+
+    @Override
+    public void deleteFromGroupsList(BluetoothGatt removeDevice) {
+        groupsList.remove(removeDevice);
     }
 
     @Override
@@ -336,41 +354,50 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void onClick(View v) {
 
         boolean didDisconnect = false;
+        String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
 
         switch (v.getId()) {
             case R.id.disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
-                didDisconnect = mBLTLeScanner.disconnectFromDevice();
-                if (didDisconnect) {
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-                    // TODO: Groups button rename
-                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Scan");
-                    mainListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+                if (buttonTitle.equals("Groups")) {
+
+                    mBLTLeScanner.disconnectFromDevice(mainBleGatt);
+
+                    mainBleGatt = null;
 
                 } else {
-                    // Failed to disconnect
+
+                    for (BluetoothGatt disconnectDevice : groupsList) {
+                        mBLTLeScanner.disconnectFromDevice(disconnectDevice);
+                    }
+                    groupsList.clear();
                 }
+
+                mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
                 break;
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
-                didDisconnect = mBLTLeScanner.disconnectFromDevice();
+                didDisconnect = mBLTLeScanner.disconnectFromDevice(mainBleGatt);
                 if (didDisconnect) {
                     setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
                     // TODO: Groups button rename
-                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Scan");
-                    mainListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
+
+                    mainBleGatt = null;
 
                 } else {
                     // Failed to disconnect
                 }
                 break;
             case R.id.lowest_button:
-                System.out.print("");
+                mBLTLeScanner.writeCustomCharacteristic(202, mainBleGatt);
                 break;
             case R.id.highest_button:
-                System.out.print("");
+                mBLTLeScanner.writeCustomCharacteristic(201, mainBleGatt);
                 break;
             default:
                 break;
@@ -393,35 +420,29 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 //        CheckBox checkBox = (CheckBox) parent.getItemAtP
 
         // If you want to select a single device
-        if (buttonTitle.equals("Groups")) {
-            boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
-            if (didConnect) {
+        if (buttonTitle.equals("Groups") || buttonTitle.equals("")) {
+            mainBleGatt = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+            if (mainBleGatt != null) {
                 if (setupFlag) {
                     setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
                 } else {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 }
             } else {
-                // Failed to connect
+                // TODO: Failed to connect
             }
         }
         // If you want to select multiple devices
         else if (buttonTitle.equals("Connect")) {
             // Add device to an arraylist
 
+            BluetoothGatt newGatt = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+
+            if (newGatt != null) {
+                groupsList.add(newGatt);
+            }
 //            CheckBox checkBox = (CheckBox) parent.findViewById(R.id.checkBox);
 //            checkBox.setChecked(!checkBox.isChecked());
-        } else {
-            boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
-            if (didConnect) {
-                if (setupFlag) {
-                    setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
-                } else {
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                }
-            } else {
-                // Failed to connect
-            }
         }
     }
 
@@ -437,35 +458,11 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         if (id == R.id.action_groups) {
             // If the title of the button is 'Groups'
-            // TODO: groups button rename
-            if (item.getTitle().equals("Scan")) {
-                startScan();
-//                item.setTitle("Connect");
+            if (item.getTitle().equals("Groups")) {
+                item.setTitle("Connect");
 //                mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
             } else { // Else if the title is 'Connect'
-
-                SparseBooleanArray checked = mainListView.getCheckedItemPositions();
-                if (checked.size() == 0) {
-                    Utils.toast(getApplicationContext(), "Please select a device");
-                    return true;
-                }
-                ArrayList<DeviceItem> selectedItems = new ArrayList<>();
-                for (int i = 0; i < checked.size(); i++) {
-                    // Item position in adapter
-                    int position = checked.keyAt(i);
-                    if (checked.valueAt(i))
-                        selectedItems.add(adapter.getItem(position));
-                }
-
-                for (DeviceItem deviceItem : selectedItems) {
-                    boolean didConnect = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
-                    if (didConnect) {
-
-                    } else {
-
-                    }
-                }
 
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
@@ -486,9 +483,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
 
-        //calling the method displayselectedscreen and passing the id of selected menu
         displayFragment(item.getItemId());
-        //make this method blank
+
         return true;
     }
 
@@ -544,13 +540,19 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     }
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
+
         try {
             brightnessLabel.setText(String.valueOf(progress));
             //TODO: groups button rename
-            if (mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString().equals("Scan")) {
-                mBLTLeScanner.writeCustomCharacteristic(progress);
+            if (buttonTitle.equals("Groups")) {
+                mBLTLeScanner.writeCustomCharacteristic(progress, mainBleGatt);
             } else {
-//                for
+
+                for (BluetoothGatt writeGatt : groupsList) {
+                    mBLTLeScanner.writeCustomCharacteristic(progress, writeGatt);
+                }
+
             }
         } catch (Exception e) {
 
