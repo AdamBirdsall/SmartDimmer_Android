@@ -35,6 +35,8 @@ public class DiscoveryFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        listener.disconnectFromDevices();
+
         listener.discoveryVariables();
 
         getActivity().setTitle("Discover");

@@ -14,6 +14,8 @@ public interface EventListener {
 
     void helpVariables();
 
+    void disconnectFromDevices();
+
     void addToGroupsList(BluetoothGatt newDevice);
 
     void deleteFromGroupsList(BluetoothGatt removeDevice);

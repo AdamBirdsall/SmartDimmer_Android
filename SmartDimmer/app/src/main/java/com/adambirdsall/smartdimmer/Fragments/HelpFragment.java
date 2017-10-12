@@ -33,6 +33,8 @@ public class HelpFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        listener.disconnectFromDevices();
+
         listener.helpVariables();
 
         getActivity().setTitle("Help");

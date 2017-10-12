@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -271,6 +272,28 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     }
 
     @Override
+    public void disconnectFromDevices() {
+        if (mainBleGatt == null && groupsList == null) {
+            return;
+        } else if(mainBleGatt == null && groupsList.size() == 0) {
+            return;
+        } else {
+
+            if (groupsList.size() > 0) {
+                for (BluetoothGatt disconnectDevice : groupsList) {
+                    mBLTLeScanner.disconnectFromDevice(disconnectDevice);
+                }
+                groupsList.clear();
+            }
+
+            if (mainBleGatt != null) {
+                mBLTLeScanner.disconnectFromDevice(mainBleGatt);
+                mainBleGatt = null;
+            }
+        }
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[],
                                            int[] grantResults) {
@@ -377,6 +400,11 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
+                int childCount = mainListView.getChildCount();
+                for (int i = 0; i < childCount; i++) {
+                    mainListView.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
+                }
+
                 break;
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
@@ -436,11 +464,32 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         else if (buttonTitle.equals("Connect")) {
             // Add device to an arraylist
 
-            BluetoothGatt newGatt = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+            ColorDrawable listItemColor = (ColorDrawable) parent.getChildAt(position).getBackground();
 
-            if (newGatt != null) {
-                groupsList.add(newGatt);
+            if (listItemColor == null || listItemColor.getColor() == Color.TRANSPARENT) {
+
+                // connect and change color
+                BluetoothGatt newGatt = mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), getApplicationContext());
+
+                if (newGatt != null) {
+                    groupsList.add(newGatt);
+
+                    // TODO: set with nice color and checkmark picture
+                    parent.getChildAt(position).setBackgroundColor(Color.parseColor("#ffffe6"));
+                }
+
+
+            } else {
+                // disconnect and put transparent color
+
+                boolean didDisconnect = mBLTLeScanner.disconnectFromDevice(groupsList.get(position));
+                if (didDisconnect) {
+                    parent.getChildAt(position).setBackgroundColor(Color.TRANSPARENT);
+                    groupsList.remove(position);
+                }
             }
+
+
 //            CheckBox checkBox = (CheckBox) parent.findViewById(R.id.checkBox);
 //            checkBox.setChecked(!checkBox.isChecked());
         }
