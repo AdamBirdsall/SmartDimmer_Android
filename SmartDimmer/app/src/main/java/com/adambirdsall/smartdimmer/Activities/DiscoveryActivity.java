@@ -56,6 +56,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public static final int REQUEST_ENABLE_BT = 1;
 
     public boolean setupFlag = false;
+    public boolean discoverFlag = false;
 
     // Device maps and arrays
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
@@ -74,9 +75,12 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     // List views, seekbars, and toolbar
     public net.qiujuer.genius.ui.widget.SeekBar stepSeekBar;
     public ScrollView scrollView;
+    public ScrollView setupScrollView;
     public Toolbar mainToolbar;
     public ListView mainListView;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private SwipeRefreshLayout setupSwipeRefresh;
+    private DrawerLayout mainDrawer;
 
     // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
@@ -132,11 +136,18 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void discoveryVariables() {
 
         setupFlag = false;
+        discoverFlag = true;
+
+        if (findViewById(R.id.action_groups) != null) {
+            findViewById(R.id.action_groups).setEnabled(true);
+            findViewById(R.id.action_groups).setVisibility(View.VISIBLE);
+            mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
+        }
 
         groupsList = new ArrayList<>();
 
         mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
-        mBLTLeScanner = new Scanner_BTLE(this, 4000, -75);
+        mBLTLeScanner = new Scanner_BTLE(this, 3000, -75);
 
         mBTDevicesHashMap = new HashMap<>();
         mBTDevicesArrayList = new ArrayList<>();
@@ -152,6 +163,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         scrollView = (ScrollView) findViewById(R.id.scrollView);
         scrollView.addView(mainListView);
+
+        mainDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 
         findViewById(R.id.disconnect_button).setOnClickListener(this);
 
@@ -171,6 +184,11 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
                         findViewById(R.id.nav_view).setEnabled(true);
+                        findViewById(R.id.swipe_refresh_layout).setEnabled(true);
+                        scrollView.setEnabled(true);
+                        mainListView.setEnabled(true);
+                        mainToolbar.setEnabled(true);
+                        mainDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
                         mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
 
                         disconnectFromDevices();
@@ -178,8 +196,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     case BottomSheetBehavior.STATE_EXPANDED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
                         findViewById(R.id.nav_view).setEnabled(false);
+                        findViewById(R.id.swipe_refresh_layout).setEnabled(false);
+                        scrollView.setEnabled(false);
+                        mainListView.setEnabled(false);
+                        mainToolbar.setEnabled(false);
+                        mainDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                        findViewById(R.id.drawer_layout).setEnabled(false);
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
                         break;
@@ -202,9 +227,14 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void setupVariables() {
 
         setupFlag = true;
+        discoverFlag = false;
 
+        if (findViewById(R.id.action_groups) != null) {
+            findViewById(R.id.action_groups).setEnabled(false);
+            findViewById(R.id.action_groups).setVisibility(View.INVISIBLE);
+        }
         mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
-        mBLTLeScanner = new Scanner_BTLE(this, 4000, -75);
+        mBLTLeScanner = new Scanner_BTLE(this, 3000, -75);
 
         mBTDevicesHashMap = new HashMap<>();
         mBTDevicesArrayList = new ArrayList<>();
@@ -214,11 +244,11 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
         mainListView.setOnItemClickListener(this);
-        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
-        swipeRefreshLayout.setOnRefreshListener(this);
+        setupSwipeRefresh = (SwipeRefreshLayout) findViewById(R.id.setup_swipe_refresh_layout);
+        setupSwipeRefresh.setOnRefreshListener(this);
 
-        scrollView = (ScrollView) findViewById(R.id.setupScrollView);
-        scrollView.addView(mainListView);
+        setupScrollView = (ScrollView) findViewById(R.id.setupScrollView);
+        setupScrollView.addView(mainListView);
 
         findViewById(R.id.setup_disconnect_button).setOnClickListener(this);
         findViewById(R.id.lowest_button).setOnClickListener(this);
@@ -234,17 +264,34 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 switch (newState) {
 
                     case BottomSheetBehavior.STATE_COLLAPSED:
-                        mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
+                        findViewById(R.id.action_groups).setEnabled(false);
+                        findViewById(R.id.action_groups).setVisibility(View.INVISIBLE);
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("");
+
                         findViewById(R.id.nav_view).setEnabled(true);
-                        mBLTLeScanner.disconnectFromDevice(mainBleGatt);
+                        findViewById(R.id.setup_swipe_refresh_layout).setEnabled(true);
+                        setupScrollView.setEnabled(true);
+                        mainListView.setEnabled(true);
+                        mainDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+
+                        disconnectFromDevices();
                         break;
 
                     case BottomSheetBehavior.STATE_EXPANDED:
-                        mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
+                        findViewById(R.id.action_groups).setEnabled(false);
+                        findViewById(R.id.action_groups).setVisibility(View.INVISIBLE);
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("");
+
                         findViewById(R.id.nav_view).setEnabled(false);
+                        findViewById(R.id.setup_swipe_refresh_layout).setEnabled(false);
+                        setupScrollView.setEnabled(false);
+                        mainListView.setEnabled(false);
+                        mainDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                        findViewById(R.id.drawer_layout).setEnabled(false);
                         break;
 
                     case BottomSheetBehavior.STATE_DRAGGING:
+                        setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
                         break;
@@ -429,7 +476,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
                     // TODO: Groups button rename
-                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
+                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("");
 
                     mainBleGatt = null;
 
@@ -664,7 +711,11 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void startScan() {
         mainListView.setEnabled(false);
 
-        swipeRefreshLayout.setRefreshing(true);
+        if (setupFlag) {
+            setupSwipeRefresh.setRefreshing(true);
+        } else {
+            swipeRefreshLayout.setRefreshing(true);
+        }
 
         mBTDevicesArrayList.clear();
         mBTDevicesHashMap.clear();
@@ -679,6 +730,10 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mBLTLeScanner.stop();
 
-        swipeRefreshLayout.setRefreshing(false);
+        if (setupFlag) {
+            setupSwipeRefresh.setRefreshing(false);
+        } else {
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 }
