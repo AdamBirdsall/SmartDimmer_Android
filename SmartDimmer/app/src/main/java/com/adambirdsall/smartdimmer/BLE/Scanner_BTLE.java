@@ -69,12 +69,10 @@ public class Scanner_BTLE {
 
     private void scanLeDevice(final boolean enabled) {
         if (enabled && !mScanning) {
-            Utils.toast(ma.getApplication(), "Starting BLE Scan...");
 
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Utils.toast(ma.getApplicationContext(), "Stopping BLE Scan...");
                     mScanning = false;
                     bluetoothAdapter.stopLeScan(mLeScanCallback);
 

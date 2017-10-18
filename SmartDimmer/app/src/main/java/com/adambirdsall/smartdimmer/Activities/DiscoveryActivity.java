@@ -13,19 +13,18 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,7 +32,6 @@ import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.ScrollView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.adambirdsall.smartdimmer.BLE.BroadcastReceiver_BTState;
@@ -51,7 +49,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class DiscoveryActivity extends AppCompatActivity implements EventListener, View.OnClickListener, AdapterView.OnItemClickListener, SeekBar.OnSeekBarChangeListener, NavigationView.OnNavigationItemSelectedListener {
+public class DiscoveryActivity extends AppCompatActivity implements EventListener, View.OnClickListener, AdapterView.OnItemClickListener, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, net.qiujuer.genius.ui.widget.SeekBar.OnSeekBarChangeListener {
 
     private final static String TAG = DiscoveryActivity.class.getSimpleName();
 
@@ -59,6 +57,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     public boolean setupFlag = false;
 
+    // Device maps and arrays
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
     private ArrayList<DeviceItem> mBTDevicesArrayList;
     private ListAdapter_BTLE_Devices adapter;
@@ -68,19 +67,20 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private BottomSheetBehavior bottomSheetBehavior;
     private BottomSheetBehavior setup_bottomSheet;
 
+    // Text view variables
     public TextView connectedLabel;
     public TextView brightnessLabel;
 
-    public SeekBar brightnessSeekBar;
+    // List views, seekbars, and toolbar
+    public net.qiujuer.genius.ui.widget.SeekBar stepSeekBar;
     public ScrollView scrollView;
     public Toolbar mainToolbar;
-
     public ListView mainListView;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
+    // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
-
     private Scanner_BTLE mBLTLeScanner;
-
     private List<BluetoothGatt> groupsList;
     private BluetoothGatt mainBleGatt;
 
@@ -147,6 +147,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         mainListView.setAdapter(adapter);
 //        mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         mainListView.setOnItemClickListener(this);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(this);
 
         scrollView = (ScrollView) findViewById(R.id.scrollView);
         scrollView.addView(mainListView);
@@ -155,9 +157,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         connectedLabel = (TextView) findViewById(R.id.connectedLabel);
         brightnessLabel = (TextView) findViewById(R.id.brightnessLabel);
-        brightnessSeekBar = (SeekBar) findViewById(R.id.brightnessSeekBar);
+        stepSeekBar = (net.qiujuer.genius.ui.widget.SeekBar) findViewById(R.id.stepSeekBar);
 
-        brightnessSeekBar.setOnSeekBarChangeListener(this);
+        stepSeekBar.setOnSeekBarChangeListener(this);
 
         bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheetLayout));
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -169,14 +171,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
                         findViewById(R.id.nav_view).setEnabled(true);
-                        // TODO: Groups disconnect
-                        mBLTLeScanner.disconnectFromDevice(mainBleGatt);
-                        break;
-                    case BottomSheetBehavior.STATE_DRAGGING:
+                        mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
+
+                        disconnectFromDevices();
                         break;
                     case BottomSheetBehavior.STATE_EXPANDED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
                         findViewById(R.id.nav_view).setEnabled(false);
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
                         break;
@@ -210,8 +213,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
-//        mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         mainListView.setOnItemClickListener(this);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(this);
 
         scrollView = (ScrollView) findViewById(R.id.setupScrollView);
         scrollView.addView(mainListView);
@@ -228,16 +232,19 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 // Check Logs to see how bottom sheets behaves
                 switch (newState) {
+
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(true);
                         findViewById(R.id.nav_view).setEnabled(true);
                         mBLTLeScanner.disconnectFromDevice(mainBleGatt);
                         break;
-                    case BottomSheetBehavior.STATE_DRAGGING:
-                        break;
+
                     case BottomSheetBehavior.STATE_EXPANDED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
                         findViewById(R.id.nav_view).setEnabled(false);
+                        break;
+
+                    case BottomSheetBehavior.STATE_DRAGGING:
                         break;
                     case BottomSheetBehavior.STATE_HIDDEN:
                         break;
@@ -252,6 +259,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 findViewById(R.id.bg).setAlpha(slideOffset);
             }
         });
+
+        startScan();
+    }
+
+    @Override
+    public void onRefresh() {
+
+        mBTDevicesHashMap.clear();
+        mBTDevicesArrayList.clear();
 
         startScan();
     }
@@ -419,6 +435,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 } else {
                     // Failed to disconnect
+                    Utils.toast(getApplicationContext(), "Failed to disconnect");
                 }
                 break;
             case R.id.lowest_button:
@@ -458,6 +475,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 }
             } else {
                 // TODO: Failed to connect
+                Utils.toast(getApplicationContext(), "Failed to connect");
             }
         }
         // If you want to select multiple devices
@@ -475,7 +493,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     groupsList.add(newGatt);
 
                     // TODO: set with nice color and checkmark picture
-                    parent.getChildAt(position).setBackgroundColor(Color.parseColor("#ffffe6"));
+                    parent.getChildAt(position).setBackgroundColor(Color.parseColor("#bee2f3"));
                 }
 
 
@@ -486,6 +504,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 if (didDisconnect) {
                     parent.getChildAt(position).setBackgroundColor(Color.TRANSPARENT);
                     groupsList.remove(position);
+                } else {
+                    // Failed to disconnect
+                    Utils.toast(getApplicationContext(), "Failed to disconnect");
                 }
             }
 
@@ -508,6 +529,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         if (id == R.id.action_groups) {
             // If the title of the button is 'Groups'
             if (item.getTitle().equals("Groups")) {
+
                 item.setTitle("Connect");
 //                mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
@@ -582,24 +604,18 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
      * @param seekBar
      */
     @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-    }
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-    }
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+    public void onProgressChanged(net.qiujuer.genius.ui.widget.SeekBar seekBar, int progress, boolean fromUser) {
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
 
         try {
-            brightnessLabel.setText(String.valueOf(progress));
+            brightnessLabel.setText(String.valueOf(progress * 20));
             //TODO: groups button rename
             if (buttonTitle.equals("Groups")) {
-                mBLTLeScanner.writeCustomCharacteristic(progress, mainBleGatt);
+                mBLTLeScanner.writeCustomCharacteristic(progress * 20, mainBleGatt);
             } else {
 
                 for (BluetoothGatt writeGatt : groupsList) {
-                    mBLTLeScanner.writeCustomCharacteristic(progress, writeGatt);
+                    mBLTLeScanner.writeCustomCharacteristic(progress * 20, writeGatt);
                 }
 
             }
@@ -608,7 +624,17 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         }
     }
 
-/************************************************************************************************/
+    @Override
+    public void onStartTrackingTouch(net.qiujuer.genius.ui.widget.SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(net.qiujuer.genius.ui.widget.SeekBar seekBar) {
+
+    }
+
+    /************************************************************************************************/
     /**
      *
      * @param device
@@ -638,6 +664,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void startScan() {
         mainListView.setEnabled(false);
 
+        swipeRefreshLayout.setRefreshing(true);
+
         mBTDevicesArrayList.clear();
         mBTDevicesHashMap.clear();
 
@@ -650,5 +678,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         mainListView.setEnabled(true);
 
         mBLTLeScanner.stop();
+
+        swipeRefreshLayout.setRefreshing(false);
     }
 }

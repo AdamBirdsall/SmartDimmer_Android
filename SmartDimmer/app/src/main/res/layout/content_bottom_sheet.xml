@@ -17,14 +17,47 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/doneText" />
+        android:text="Disconnect" />
 
     <SeekBar
+        android:visibility="invisible"
         android:id="@+id/brightnessSeekBar"
         android:layout_width="296dp"
         android:layout_height="20dp"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
+
+    <net.qiujuer.genius.ui.widget.SeekBar
+        android:id="@+id/stepSeekBar"
+        android:layout_width="296dp"
+        android:layout_height="20dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+
+        app:gFont="roboto.ttf"
+        app:gMax="5"
+        app:gMin="0"
+        app:gValue="0"
+
+        app:gIndicator="none"
+        app:gIndicatorTextPadding="2dp"
+        app:gIndicatorBackgroundColor="#289dd8"
+        app:gIndicatorFormatter="%d"
+        app:gIndicatorSeparation="14dp"
+        app:gIndicatorTextAppearance="@style/Genius.Widget.BalloonMarker.TextAppearance"
+
+        app:gRippleColor="#289dd8"
+        app:gScrubberColor="#bee2f3"
+        app:gScrubberStroke="4dp"
+        app:gThumbColor="#289dd8"
+        app:gThumbSize="6dp"
+        app:gTickSize="3dp"
+        app:gTouchSize="12dp"
+        app:gTrackColor="@color/grey_500"
+        app:gTrackStroke="2dp"
+
+        app:gMirrorForRtl="true"
+        app:gAllowTrackClickToDrag="true"/>
 
     <TextView
         android:id="@+id/connectedLabel"
