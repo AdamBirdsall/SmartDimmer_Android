@@ -27,7 +27,6 @@ public class Scanner_BTLE {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGattCharacteristic writeCharacteristic;
-    private BluetoothGattCharacteristic readCharacteristic;
 
     private boolean mScanning;
     private Handler mHandler;
@@ -37,7 +36,6 @@ public class Scanner_BTLE {
 
     private final UUID serviceUUID = UUID.fromString("00001523-1212-EFDE-1523-785FEABCD123");
     private final UUID writeUUID = UUID.fromString("00001525-1212-EFDE-1523-785FEABCD123");
-    private final UUID readUUID = UUID.fromString("00001524-1212-EFDE-1523-785FEABCD123");
 
     public Scanner_BTLE(DiscoveryActivity mainActivity, long scanPeriod, int signalStrength) {
         ma = mainActivity;
@@ -90,14 +88,14 @@ public class Scanner_BTLE {
         @Override
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
             final int new_rssi = i;
-            if (new_rssi > signalStrength) {
+//            if (new_rssi > signalStrength) {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         ma.addDevice(bluetoothDevice, new_rssi);
                     }
                 });
-            }
+//            }
         }
     };
 
@@ -164,7 +162,6 @@ public class Scanner_BTLE {
                 });
 
                 mBluetoothGatt = null;
-                readCharacteristic = null;
                 writeCharacteristic = null;
                 gatt.close();
             }
@@ -175,28 +172,10 @@ public class Scanner_BTLE {
 
             BluetoothGattService service = gatt.getService(serviceUUID);
             final BluetoothGattCharacteristic characteristic = service.getCharacteristic(writeUUID);
-            readCharacteristic = service.getCharacteristic(readUUID);
             writeCharacteristic = characteristic;
         }
     };
 
-
-    public void readCustomCharacteristic() {
-        if (bluetoothAdapter == null || mBluetoothGatt == null) {
-            return;
-        }
-
-        /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = mBluetoothGatt.getService(serviceUUID);
-        if(mCustomService == null){
-            return;
-        }
-
-        /*get the read characteristic from the service*/
-        BluetoothGattCharacteristic mReadCharacteristic = mCustomService.getCharacteristic(readUUID);
-        if(!mBluetoothGatt.readCharacteristic(mReadCharacteristic)){
-        }
-    }
 
     public void writeCustomCharacteristic(int value, BluetoothGatt newDevice) {
         if (bluetoothAdapter == null || mBluetoothGatt == null || newDevice == null) {

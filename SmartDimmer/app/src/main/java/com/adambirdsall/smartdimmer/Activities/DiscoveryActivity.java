@@ -116,8 +116,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("");
-                builder.setMessage("");
+                builder.setTitle("Allow Bluetooth?");
+                builder.setMessage("Please allow this app to access Bluetooth on your device");
                 builder.setPositiveButton(android.R.string.ok, null);
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -655,14 +655,14 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
 
         try {
-            brightnessLabel.setText(String.valueOf(progress * 20));
+            brightnessLabel.setText(String.valueOf(progress * 10));
             //TODO: groups button rename
             if (buttonTitle.equals("Groups")) {
-                mBLTLeScanner.writeCustomCharacteristic(progress * 20, mainBleGatt);
+                mBLTLeScanner.writeCustomCharacteristic(progress * 10, mainBleGatt);
             } else {
 
                 for (BluetoothGatt writeGatt : groupsList) {
-                    mBLTLeScanner.writeCustomCharacteristic(progress * 20, writeGatt);
+                    mBLTLeScanner.writeCustomCharacteristic(progress * 10, writeGatt);
                 }
 
             }
@@ -690,19 +690,23 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void addDevice(BluetoothDevice device, int new_rssi) {
         String address = device.getAddress();
 
+        if (device.getName() == null || device.getName().length() == 0) {
+            return;
+        }
         if (!mBTDevicesHashMap.containsKey(address)) {
             DeviceItem newDevice = new DeviceItem(device);
-            newDevice.setRSSI(new_rssi);
+//            newDevice.setRSSI(new_rssi);
 
             System.out.println(newDevice);
 
-            if (newDevice.getName() != null && newDevice.getName().startsWith("SmartDimmer")) {
+            if (newDevice.getName() != null && newDevice.getName().length() > 0) {
+//            if (newDevice.getName() != null && newDevice.getName().contains("134")) {
                 mBTDevicesHashMap.put(address, newDevice);
                 mBTDevicesArrayList.add(newDevice);
             }
 
         } else {
-            mBTDevicesHashMap.get(address).setRSSI(new_rssi);
+//            mBTDevicesHashMap.get(address).setRSSI(new_rssi);
         }
 
         adapter.notifyDataSetChanged();
