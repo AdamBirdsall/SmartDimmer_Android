@@ -28,6 +28,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.ListView;
@@ -42,6 +43,7 @@ import com.adambirdsall.smartdimmer.Fragments.DiscoveryFragment;
 import com.adambirdsall.smartdimmer.Fragments.HelpFragment;
 import com.adambirdsall.smartdimmer.Fragments.SetupFragment;
 import com.adambirdsall.smartdimmer.R;
+import com.adambirdsall.smartdimmer.Utils.DeviceDatabase;
 import com.adambirdsall.smartdimmer.Utils.EventListener;
 import com.adambirdsall.smartdimmer.Utils.Utils;
 
@@ -57,6 +59,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     public boolean setupFlag = false;
     public boolean discoverFlag = false;
+
+    // Database
+    private DeviceDatabase deviceDb;
 
     // Device maps and arrays
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
@@ -95,6 +100,10 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_discovery);
 
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+        deviceDb = new DeviceDatabase(this);
+
         mainToolbar = (Toolbar) findViewById(R.id.toolbar);
         mainToolbar.setTitleTextColor(Color.parseColor("#289dd8"));
         setSupportActionBar(mainToolbar);
@@ -116,8 +125,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Allow Bluetooth?");
-                builder.setMessage("Please allow this app to access Bluetooth on your device");
+                builder.setTitle("Allow Location for Bluetooth?");
+                builder.setMessage("Please allow this app to access location to use Bluetooth on your device");
                 builder.setPositiveButton(android.R.string.ok, null);
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -156,7 +165,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
-//        mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
         mainListView.setOnItemClickListener(this);
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -509,7 +518,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
         DeviceItem deviceItem = (DeviceItem) parent.getItemAtPosition(position);
-//        CheckBox checkBox = (CheckBox) parent.getItemAtP
 
         // If you want to select a single device
         if (buttonTitle.equals("Groups") || buttonTitle.equals("")) {
@@ -695,18 +703,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         }
         if (!mBTDevicesHashMap.containsKey(address)) {
             DeviceItem newDevice = new DeviceItem(device);
-//            newDevice.setRSSI(new_rssi);
 
             System.out.println(newDevice);
 
             if (newDevice.getName() != null && newDevice.getName().length() > 0) {
-//            if (newDevice.getName() != null && newDevice.getName().contains("134")) {
                 mBTDevicesHashMap.put(address, newDevice);
                 mBTDevicesArrayList.add(newDevice);
             }
-
         } else {
-//            mBTDevicesHashMap.get(address).setRSSI(new_rssi);
+
         }
 
         adapter.notifyDataSetChanged();

@@ -7,6 +7,9 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.os.Handler;
 
@@ -27,6 +30,7 @@ public class Scanner_BTLE {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGattCharacteristic writeCharacteristic;
+
 
     private boolean mScanning;
     private Handler mHandler;
@@ -65,37 +69,51 @@ public class Scanner_BTLE {
         scanLeDevice(false);
     }
 
-    private void scanLeDevice(final boolean enabled) {
-        if (enabled && !mScanning) {
+    private void scanLeDevice(final boolean enable) {
 
+        final BluetoothLeScanner bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+
+        if (enable) {
+            // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mScanning = false;
-                    bluetoothAdapter.stopLeScan(mLeScanCallback);
+
+                    bluetoothLeScanner.stopScan(bleScanCallBack);
 
                     ma.stopScan();
                 }
             }, scanPeriod);
 
             mScanning = true;
-
-            bluetoothAdapter.startLeScan(mLeScanCallback);
+            bluetoothLeScanner.startScan(bleScanCallBack);
+        } else {
+            mScanning = false;
+            bluetoothLeScanner.stopScan(bleScanCallBack);
         }
     }
 
-    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+    private ScanCallback bleScanCallBack = new ScanCallback() {
         @Override
-        public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
-            final int new_rssi = i;
-//            if (new_rssi > signalStrength) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        ma.addDevice(bluetoothDevice, new_rssi);
-                    }
-                });
-//            }
+        public void onScanResult(int callbackType, final ScanResult result) {
+            super.onScanResult(callbackType, result);
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    ma.addDevice(result.getDevice(), result.getRssi());
+                }
+            });
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
         }
     };
 

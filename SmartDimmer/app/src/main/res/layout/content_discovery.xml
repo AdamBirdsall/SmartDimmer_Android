@@ -9,21 +9,19 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     tools:context="com.adambirdsall.smartdimmer.Activities.DiscoveryActivity">
 
-    <net.qiujuer.genius.ui.widget.FloatActionButton
-        android:id="@+id/action_add"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        app:gBackgroundColor="@color/red_500"
-        app:gTouchColor="@color/brillianceBlue"
-        tools:layout_editor_absoluteX="277dp"
-        tools:layout_editor_absoluteY="16dp" />
+    <!--<net.qiujuer.genius.ui.widget.FloatActionButton-->
+        <!--android:id="@+id/action_add"-->
+        <!--android:layout_width="50dp"-->
+        <!--android:layout_height="50dp"-->
+        <!--app:gBackgroundColor="@color/red_500"-->
+        <!--app:gTouchColor="@color/brillianceBlue"-->
+        <!--tools:layout_editor_absoluteX="277dp"-->
+        <!--tools:layout_editor_absoluteY="16dp" />-->
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_layout"
-        android:layout_width="336dp"
-        android:layout_height="535dp"
-        tools:layout_editor_absoluteY="8dp"
-        tools:layout_editor_absoluteX="8dp">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <ScrollView
             android:id="@+id/scrollView"
