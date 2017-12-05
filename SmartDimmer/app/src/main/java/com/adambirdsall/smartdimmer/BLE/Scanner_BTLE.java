@@ -119,6 +119,7 @@ public class Scanner_BTLE {
 
     public boolean disconnectFromDevice(BluetoothGatt disconnectDevice) {
         try {
+            disconnectDevice.close();
             disconnectDevice.disconnect();
             return true;
         } catch (Exception e) {
@@ -167,8 +168,7 @@ public class Scanner_BTLE {
 
                 mBluetoothGatt = gatt;
                 gatt.discoverServices();
-            }
-            if (newState == BluetoothGatt.STATE_DISCONNECTED) {
+            } else { //if (newState == BluetoothGatt.STATE_DISCONNECTED) {
 
                 ma.runOnUiThread(new Runnable() {
                     @Override

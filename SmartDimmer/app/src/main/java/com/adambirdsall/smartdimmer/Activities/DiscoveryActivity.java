@@ -564,10 +564,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     Utils.toast(getApplicationContext(), "Failed to disconnect");
                 }
             }
-
-
-//            CheckBox checkBox = (CheckBox) parent.findViewById(R.id.checkBox);
-//            checkBox.setChecked(!checkBox.isChecked());
         }
     }
 
@@ -586,7 +582,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             if (item.getTitle().equals("Groups")) {
 
                 item.setTitle("Connect");
-//                mainListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
             } else { // Else if the title is 'Connect'
 
@@ -696,20 +691,22 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
      * @param new_rssi
      */
     public void addDevice(BluetoothDevice device, int new_rssi) {
-        String address = device.getAddress();
+//        String address = device.getAddress();
 
         if (device.getName() == null || device.getName().length() == 0) {
             return;
         }
-        if (!mBTDevicesHashMap.containsKey(address)) {
+        if (!mBTDevicesHashMap.containsKey(device.getAddress())) {
             DeviceItem newDevice = new DeviceItem(device);
 
             System.out.println(newDevice);
 
-            if (newDevice.getName() != null && newDevice.getName().length() > 0) {
-                mBTDevicesHashMap.put(address, newDevice);
+            if (newDevice.getName() != null) {
+                mBTDevicesHashMap.put(newDevice.getAddress(), newDevice);
                 mBTDevicesArrayList.add(newDevice);
             }
+
+            newDevice = null;
         } else {
 
         }
