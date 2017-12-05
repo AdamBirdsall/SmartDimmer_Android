@@ -6,14 +6,19 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by AdamBirdsall on 11/22/17.
+ * @author Adam Birdsall
  */
 
 public class DeviceDatabase extends SQLiteOpenHelper {
 
-    public static final String DATABASE_NAME = "Devices.db";
+    public static final String DATABASE_NAME = "DEVICES";
     public static final String TABLE_NAME = "SAVED_DEVICES";
+
     public static final String COL_1_ADDRESS = "MAC_ADDRESS";
     public static final String COL_2_NAME = "NAME";
     public static final String COL_3_BRIGHTNESS = "BRIGHTNESS_VALUE";
@@ -25,57 +30,115 @@ public class DeviceDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table " + TABLE_NAME +" (ID INTEGER PRIMARY KEY AUTOINCREMENT,NAME TEXT,SURNAME TEXT,MARKS INTEGER)");
+        db.execSQL("create table " + TABLE_NAME + " (" +
+                COL_1_ADDRESS + " TEXT," +
+                COL_2_NAME + " TEXT," +
+                COL_3_BRIGHTNESS + " TEXT," +
+                COL_4_PREVIOUS + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS "+TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(db);
     }
 
-    public boolean insertData(String macAddress, String name, String brightnessValue, String previousBrightness) {
+    // Adding new contact
+    public void addDevice(DeviceObject newDevice) {
 
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
 
-        contentValues.put(COL_1_ADDRESS, macAddress);
-        contentValues.put(COL_2_NAME, name);
-        contentValues.put(COL_3_BRIGHTNESS, brightnessValue);
-        contentValues.put(COL_4_PREVIOUS, previousBrightness);
+        ContentValues values = new ContentValues();
+        values.put(COL_1_ADDRESS, newDevice.getMacAddress());
+        values.put(COL_2_NAME, newDevice.getDeviceName());
+        values.put(COL_3_BRIGHTNESS, newDevice.getBrightnessValue());
+        values.put(COL_4_PREVIOUS, newDevice.getPreviousValue());
 
-        long result = db.insert(TABLE_NAME, null, contentValues);
+        // Inserting Row
+        db.insert(TABLE_NAME, null, values);
+        db.close(); // Closing database connection
+    }
 
-        if (result == -1) {
-            return false;
-        } else {
-            return true;
+    // Getting single contact
+    public DeviceObject getDevice(String macAddress) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_NAME, new String[] {
+                        COL_1_ADDRESS, COL_2_NAME, COL_3_BRIGHTNESS, COL_4_PREVIOUS }, COL_1_ADDRESS + "=?",
+                new String[] { String.valueOf(macAddress) }, null, null, null, null);
+
+        if (cursor != null)
+            cursor.moveToFirst();
+
+        DeviceObject deviceObject = new DeviceObject(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3));
+
+        // return contact
+        return deviceObject;
+    }
+
+    // Getting All Contacts
+    public List<DeviceObject> getAllDevices() {
+
+        List<DeviceObject> deviceList = new ArrayList<DeviceObject>();
+        // Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_NAME;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                DeviceObject deviceObject = new DeviceObject();
+                deviceObject.setMacAddress(cursor.getString(0));
+                deviceObject.setDeviceName(cursor.getString(1));
+                deviceObject.setBrightnessValue(cursor.getString(2));
+                deviceObject.setPreviousValue(cursor.getString(3));
+
+                // Adding contact to list
+                deviceList.add(deviceObject);
+            } while (cursor.moveToNext());
         }
+
+        // return contact list
+        return deviceList;
     }
 
-    public Cursor getAllData() {
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor res = db.rawQuery("select * from "+TABLE_NAME,null);
-        return res;
+    // Getting contacts Count
+    public int getDevicesCount() {
+
+        String countQuery = "SELECT * FROM " + TABLE_NAME;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        cursor.close();
+
+        // return count
+        return cursor.getCount();
     }
 
-    public boolean updateData(String macAddress, String name, String brightnessValue, String previousBrightness) {
+    // Updating single contact
+    public int updateDevice(DeviceObject deviceObject) {
+
         SQLiteDatabase db = this.getWritableDatabase();
 
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(COL_1_ADDRESS, macAddress);
-        contentValues.put(COL_2_NAME, name);
-        contentValues.put(COL_3_BRIGHTNESS, brightnessValue);
-        contentValues.put(COL_4_PREVIOUS, previousBrightness);
+        ContentValues values = new ContentValues();
+        values.put(COL_2_NAME, deviceObject.getDeviceName());
+        values.put(COL_3_BRIGHTNESS, deviceObject.getBrightnessValue());
+        values.put(COL_4_PREVIOUS, deviceObject.getPreviousValue());
 
-        db.update(TABLE_NAME, contentValues, "BRIGHTNESS_VALUE = ?", new String[] { brightnessValue });
-        db.update(TABLE_NAME, contentValues, "PREVIOUS_VALUE = ?", new String[] { previousBrightness });
-
-        return true;
+        // updating row
+        return db.update(TABLE_NAME, values, COL_1_ADDRESS + " = ?",
+                new String[] { String.valueOf(deviceObject.getMacAddress()) });
     }
 
-    public Integer deleteData (String macAddress) {
+    // Deleting single contact
+    public void deleteDevice(DeviceObject deviceObject) {
+
         SQLiteDatabase db = this.getWritableDatabase();
-        return db.delete(TABLE_NAME, "MAC_ADDRESS = ?", new String[] { macAddress });
+        db.delete(TABLE_NAME, COL_1_ADDRESS + " = ?",
+                new String[] { String.valueOf(deviceObject.getMacAddress()) });
+        db.close();
     }
 }

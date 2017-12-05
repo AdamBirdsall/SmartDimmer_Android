@@ -44,6 +44,7 @@ import com.adambirdsall.smartdimmer.Fragments.HelpFragment;
 import com.adambirdsall.smartdimmer.Fragments.SetupFragment;
 import com.adambirdsall.smartdimmer.R;
 import com.adambirdsall.smartdimmer.Utils.DeviceDatabase;
+import com.adambirdsall.smartdimmer.Utils.DeviceObject;
 import com.adambirdsall.smartdimmer.Utils.EventListener;
 import com.adambirdsall.smartdimmer.Utils.Utils;
 
@@ -62,6 +63,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     // Database
     private DeviceDatabase deviceDb;
+    private List<DeviceObject> listOfDevices;
 
     // Device maps and arrays
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
@@ -78,6 +80,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public TextView brightnessLabel;
 
     // List views, seekbars, and toolbar
+    public net.qiujuer.genius.ui.widget.EditText renameTextEdit;
     public net.qiujuer.genius.ui.widget.SeekBar stepSeekBar;
     public ScrollView scrollView;
     public ScrollView setupScrollView;
@@ -103,6 +106,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
         deviceDb = new DeviceDatabase(this);
+        listOfDevices = deviceDb.getAllDevices();
 
         mainToolbar = (Toolbar) findViewById(R.id.toolbar);
         mainToolbar.setTitleTextColor(Color.parseColor("#289dd8"));
@@ -242,6 +246,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             findViewById(R.id.action_groups).setEnabled(false);
             findViewById(R.id.action_groups).setVisibility(View.INVISIBLE);
         }
+
         mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
         mBLTLeScanner = new Scanner_BTLE(this, 3000, -75);
 
@@ -264,6 +269,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         findViewById(R.id.highest_button).setOnClickListener(this);
 
         connectedLabel = (TextView) findViewById(R.id.setup_connectedLabel);
+        renameTextEdit = (net.qiujuer.genius.ui.widget.EditText) findViewById(R.id.renameText);
 
         setup_bottomSheet = BottomSheetBehavior.from(findViewById(R.id.setupSheetLayout));
         setup_bottomSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -482,6 +488,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 Utils.toast(getApplicationContext(), "Disconnecting..");
                 didDisconnect = mBLTLeScanner.disconnectFromDevice(mainBleGatt);
                 if (didDisconnect) {
+
+                    DeviceObject updateDevice = new DeviceObject();
+                    updateDevice.setMacAddress(mainBleGatt.getDevice().getAddress());
+                    updateDevice.setDeviceName(renameTextEdit.getText().toString());
+                    updateDevice.setBrightnessValue("0");
+                    updateDevice.setPreviousValue("0");
+
+                    deviceDb.updateDevice(updateDevice);
+
                     setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
                     // TODO: Groups button rename
@@ -704,6 +719,19 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             if (newDevice.getName() != null) {
                 mBTDevicesHashMap.put(newDevice.getAddress(), newDevice);
                 mBTDevicesArrayList.add(newDevice);
+
+                boolean addNewFlag = true;
+                for (DeviceObject existingObject : listOfDevices) {
+                    if (existingObject.getMacAddress().equals(newDevice.getAddress())) {
+                        addNewFlag = false;
+                    }
+                }
+
+                if (addNewFlag) {
+                    DeviceObject deviceObject = new DeviceObject(newDevice.getAddress(), newDevice.getName(), "0", "0");
+                    listOfDevices.add(deviceObject);
+                    deviceDb.addDevice(deviceObject);
+                }
             }
 
             newDevice = null;

@@ -10,8 +10,11 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.adambirdsall.smartdimmer.R;
+import com.adambirdsall.smartdimmer.Utils.DeviceDatabase;
+import com.adambirdsall.smartdimmer.Utils.DeviceObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by AdamBirdsall on 7/25/17.
@@ -23,12 +26,15 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
     int layoutResourceID;
     ArrayList<DeviceItem> devices;
 
+    private DeviceDatabase deviceDb;
+
     public ListAdapter_BTLE_Devices(Activity activity, int resource, ArrayList<DeviceItem> objects) {
         super(activity.getApplicationContext(), resource, objects);
 
         this.activity = activity;
         layoutResourceID = resource;
         devices = objects;
+        this.deviceDb = new DeviceDatabase(activity.getApplicationContext());
     }
 
     @Override
@@ -44,9 +50,22 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
         String address = deviceItem.getAddress();
         int rssi = deviceItem.getRssi();
 
+        List<DeviceObject> deviceObjectList = deviceDb.getAllDevices();
+
         TextView tv_name = (TextView) convertView.findViewById(R.id.tv_name);
         if (name != null && name.length() > 0) {
-            tv_name.setText(deviceItem.getName());
+
+            boolean nameExistsFlag = false;
+            for (DeviceObject existingObject : deviceObjectList) {
+                if (existingObject.getMacAddress().equals(deviceItem.getAddress())) {
+                    tv_name.setText(existingObject.getDeviceName());
+                    nameExistsFlag = true;
+                }
+            }
+
+            if (!nameExistsFlag) {
+                tv_name.setText(deviceItem.getName());
+            }
         } else {
             tv_name.setText("No Name");
         }
