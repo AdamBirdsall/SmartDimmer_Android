@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.adambirdsall.smartdimmer.R;
 import com.adambirdsall.smartdimmer.Utils.EventListener;
@@ -37,7 +38,11 @@ public class SetupFragment extends Fragment {
 
         listener.setupVariables();
 
-        getActivity().setTitle("Setup");
+        TextView titleTextview = (TextView) getActivity().findViewById(R.id.titleTextView);
+        titleTextview.setVisibility(View.VISIBLE);
+        titleTextview.setText("Setup");
+
+        getActivity().findViewById(R.id.toolbarImage).setVisibility(View.INVISIBLE);
     }
 
     @Nullable

@@ -17,8 +17,28 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#ffffff"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
-            <!--app:title="Brilliance LED" />-->
+            app:popupTheme="@style/AppTheme.PopupOverlay">
+
+            <ImageView
+                android:id="@+id/toolbarImage"
+                android:layout_width="wrap_content"
+                android:contentDescription="none"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@drawable/top_bar_title"/>
+
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:text="" />
+
+        </android.support.v7.widget.Toolbar>
+
+
+        <!--app:title="Brilliance LED" />-->
 
     </android.support.design.widget.AppBarLayout>
 
