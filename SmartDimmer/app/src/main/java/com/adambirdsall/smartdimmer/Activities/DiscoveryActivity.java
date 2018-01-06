@@ -450,7 +450,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     public void onClick(View v) {
 
-        boolean didDisconnect = false;
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
 
         switch (v.getId()) {
@@ -541,13 +540,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 mBLTLeScanner.disconnectFromDevice(true, deviceItem.getAddress(), false);
                 parent.getChildAt(position).setBackgroundColor(Color.WHITE);
                 Utils.toast(getApplicationContext(), "Failed to disconnect");
-
-//                if (didDisconnect) {
-//                    parent.getChildAt(position).setBackgroundColor(Color.WHITE);
-//                } else {
-//                    // Failed to disconnect
-//                    Utils.toast(getApplicationContext(), "Failed to disconnect");
-//                }
             }
         }
     }
@@ -681,11 +673,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         try {
 
+            stepSeekBar.setOnSeekBarChangeListener(null);
+
             if (buttonTitle.equals("Groups")) {
                 mBLTLeScanner.updateSwitchBrightness(false, deviceDb, isOn);
             } else {
                 mBLTLeScanner.updateSwitchBrightness(true, deviceDb, isOn);
             }
+
+            stepSeekBar.setOnSeekBarChangeListener(this);
 
         } catch (Exception e) {
 

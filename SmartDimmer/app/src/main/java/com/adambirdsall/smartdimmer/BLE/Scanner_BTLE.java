@@ -61,6 +61,8 @@ public class Scanner_BTLE extends DiscoveryActivity {
     private final UUID serviceUUID = UUID.fromString("00001523-1212-EFDE-1523-785FEABCD123");
     private final UUID writeUUID = UUID.fromString("00001525-1212-EFDE-1523-785FEABCD123");
 
+    private boolean switchClicked = false;
+
     public Scanner_BTLE(DiscoveryActivity mainActivity, long scanPeriod, int signalStrength) {
         ma = mainActivity;
         mHandler = new Handler();
@@ -365,10 +367,11 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(writeUUID);
                 mWriteCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
 
+                updateDevice(writeToGatt.getDevice(), value, deviceDb);
+
                 if(!writeToGatt.writeCharacteristic(mWriteCharacteristic)) {
 
                 } else {
-                    updateDevice(writeToGatt.getDevice(), value, deviceDb);
 
                     ma.runOnUiThread(new Runnable() {
                         @Override
@@ -397,20 +400,27 @@ public class Scanner_BTLE extends DiscoveryActivity {
             BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(writeUUID);
             mWriteCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
 
+            updateDevice(mBluetoothGatt.getDevice(), value, deviceDb);
 
             if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)) {
 
             } else {
-                updateDevice(mBluetoothGatt.getDevice(), value, deviceDb);
                 ma.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         ma.brightnessLabel.setText(String.valueOf(value));
+
+                        if (switchClicked) {
+                            ma.stepSeekBar.setProgress(value/10);
+                        }
                     }
                 });
+
                 System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
             }
         }
+
+        switchClicked = false;
     }
 
     /**
@@ -448,21 +458,13 @@ public class Scanner_BTLE extends DiscoveryActivity {
         deviceDb.updateDevice(updateDevice);
     }
 
-    public void updateBrightnessValue(int brightnessValue, DeviceDatabase deviceDb, boolean isGroups) {
-        DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
-
-        updateDevice.setDeviceName(updateDevice.getDeviceName());
-        updateDevice.setMacAddress(mBluetoothGatt.getDevice().getAddress());
-        updateDevice.setBrightnessValue(String.valueOf(brightnessValue));
-        updateDevice.setPreviousValue("0");
-
-        deviceDb.updateDeviceBrightness(updateDevice);
-    }
 
     public void updateSwitchBrightness(boolean isGroups, DeviceDatabase deviceDb, boolean isOn) {
 
         DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
-        
+
+        switchClicked = true;
+
         // Device turns on, sets brightness of previous value
         if (isOn) {
 
@@ -472,14 +474,5 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
             writeCustomCharacteristic(0, isGroups, deviceDb);
         }
-
-        deviceDb.updateDeviceBrightness(updateDevice);
-    }
-
-    public int getDeviceBrightness(DeviceDatabase deviceDb) {
-
-        DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
-
-        return Integer.valueOf(updateDevice.getBrightnessValue());
     }
 }
