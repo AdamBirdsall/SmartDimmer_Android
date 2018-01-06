@@ -119,9 +119,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             public void onClick(View view) {
 
                 cancelGroupsView();
-
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
             }
         });
 
@@ -587,7 +584,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 mBLTLeScanner.disconnectFromDevice(true, deviceItem.getAddress(), false);
                 parent.getChildAt(position).setBackgroundColor(Color.WHITE);
-                Utils.toast(getApplicationContext(), "Failed to disconnect");
             }
         }
     }
@@ -611,8 +607,13 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             } else { // Else if the title is 'Connect'
 
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                fab.setVisibility(View.INVISIBLE);
+                if (mBLTLeScanner.groupOfDevices.size() > 0) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    fab.setVisibility(View.INVISIBLE);
+                } else {
+
+                    Utils.toast(getApplicationContext(), "Please select devices before connecting.");
+                }
             }
 
             return true;

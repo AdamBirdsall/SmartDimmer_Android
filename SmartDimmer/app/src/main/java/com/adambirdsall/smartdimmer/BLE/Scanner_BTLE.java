@@ -45,7 +45,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
     private BluetoothGattCharacteristic writeCharacteristic;
     private BluetoothLeScanner bluetoothLeScanner;
 
-    private List<BluetoothGatt> groupOfDevices;
+    public List<BluetoothGatt> groupOfDevices;
 
     private ScanSettings settings;
     private List<ScanFilter> filters;
