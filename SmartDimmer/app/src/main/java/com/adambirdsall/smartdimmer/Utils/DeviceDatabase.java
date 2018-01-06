@@ -133,6 +133,20 @@ public class DeviceDatabase extends SQLiteOpenHelper {
                 new String[] { String.valueOf(deviceObject.getMacAddress()) });
     }
 
+    public int updateDeviceBrightness(DeviceObject deviceObject) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(COL_2_NAME, deviceObject.getDeviceName());
+        values.put(COL_3_BRIGHTNESS, deviceObject.getBrightnessValue());
+        values.put(COL_4_PREVIOUS, deviceObject.getPreviousValue());
+
+        // updating row
+        return db.update(TABLE_NAME, values, COL_1_ADDRESS + " = ?",
+                new String[] { String.valueOf(deviceObject.getMacAddress()) });
+    }
+
     // Deleting single contact
     public void deleteDevice(DeviceObject deviceObject) {
 

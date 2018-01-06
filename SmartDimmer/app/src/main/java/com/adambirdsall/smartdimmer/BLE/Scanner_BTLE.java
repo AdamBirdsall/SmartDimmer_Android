@@ -29,6 +29,7 @@ import com.adambirdsall.smartdimmer.Utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.UUID;
 
 /**
@@ -340,7 +341,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
     };
 
 
-    public void writeCustomCharacteristic(int value, boolean isGroups) {
+    public void writeCustomCharacteristic(final int value, boolean isGroups, DeviceDatabase deviceDb) {
 
         if (bluetoothAdapter == null) {
             return;
@@ -367,6 +368,15 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 if(!writeToGatt.writeCharacteristic(mWriteCharacteristic)) {
 
                 } else {
+                    updateDevice(writeToGatt.getDevice(), value, deviceDb);
+
+                    ma.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ma.brightnessLabel.setText(String.valueOf(value));
+                        }
+                    });
+
                     System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
                 }
             }
@@ -391,6 +401,13 @@ public class Scanner_BTLE extends DiscoveryActivity {
             if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)) {
 
             } else {
+                updateDevice(mBluetoothGatt.getDevice(), value, deviceDb);
+                ma.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ma.brightnessLabel.setText(String.valueOf(value));
+                    }
+                });
                 System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
             }
         }
@@ -399,6 +416,20 @@ public class Scanner_BTLE extends DiscoveryActivity {
     /**
      * SQL functions to update values
      */
+
+    public void updateDevice(BluetoothDevice updateDevice, int brightnessValue, DeviceDatabase deviceDb) {
+
+        DeviceObject getDevice = deviceDb.getDevice(updateDevice.getAddress());
+
+        getDevice.setDeviceName(getDevice.getDeviceName());
+        getDevice.setMacAddress(getDevice.getMacAddress());
+        getDevice.setPreviousValue(getDevice.getBrightnessValue());
+        getDevice.setBrightnessValue(String.valueOf(brightnessValue));
+
+        deviceDb.updateDeviceBrightness(getDevice);
+    }
+
+
     public void updateDeviceName(String nameText, DeviceDatabase deviceDb) {
 
         DeviceObject updateDevice = new DeviceObject();
@@ -415,5 +446,40 @@ public class Scanner_BTLE extends DiscoveryActivity {
         updateDevice.setPreviousValue("0");
 
         deviceDb.updateDevice(updateDevice);
+    }
+
+    public void updateBrightnessValue(int brightnessValue, DeviceDatabase deviceDb, boolean isGroups) {
+        DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
+
+        updateDevice.setDeviceName(updateDevice.getDeviceName());
+        updateDevice.setMacAddress(mBluetoothGatt.getDevice().getAddress());
+        updateDevice.setBrightnessValue(String.valueOf(brightnessValue));
+        updateDevice.setPreviousValue("0");
+
+        deviceDb.updateDeviceBrightness(updateDevice);
+    }
+
+    public void updateSwitchBrightness(boolean isGroups, DeviceDatabase deviceDb, boolean isOn) {
+
+        DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
+        
+        // Device turns on, sets brightness of previous value
+        if (isOn) {
+
+            writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), isGroups, deviceDb);
+
+        } else {
+
+            writeCustomCharacteristic(0, isGroups, deviceDb);
+        }
+
+        deviceDb.updateDeviceBrightness(updateDevice);
+    }
+
+    public int getDeviceBrightness(DeviceDatabase deviceDb) {
+
+        DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
+
+        return Integer.valueOf(updateDevice.getBrightnessValue());
     }
 }

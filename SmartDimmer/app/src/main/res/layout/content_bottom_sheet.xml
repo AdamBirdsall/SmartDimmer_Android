@@ -85,6 +85,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/disconnect_button"
-        android:layout_alignStart="@+id/stepSeekBar" />
+        android:layout_alignStart="@+id/stepSeekBar"
+        android:checked="false"/>
 
 </RelativeLayout>

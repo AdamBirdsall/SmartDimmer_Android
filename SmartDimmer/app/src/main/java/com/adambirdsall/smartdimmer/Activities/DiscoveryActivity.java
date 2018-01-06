@@ -30,8 +30,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.adambirdsall.smartdimmer.BLE.BroadcastReceiver_BTState;
@@ -51,7 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class DiscoveryActivity extends AppCompatActivity implements EventListener, View.OnClickListener, AdapterView.OnItemClickListener, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, net.qiujuer.genius.ui.widget.SeekBar.OnSeekBarChangeListener {
+public class DiscoveryActivity extends AppCompatActivity implements EventListener, View.OnClickListener, AdapterView.OnItemClickListener, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, net.qiujuer.genius.ui.widget.SeekBar.OnSeekBarChangeListener, Switch.OnCheckedChangeListener {
 
     private final static String TAG = DiscoveryActivity.class.getSimpleName();
 
@@ -87,6 +89,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private SwipeRefreshLayout swipeRefreshLayout;
     private SwipeRefreshLayout setupSwipeRefresh;
     private DrawerLayout mainDrawer;
+    private Switch onOffSwitch;
 
     // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
@@ -181,6 +184,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         stepSeekBar = (net.qiujuer.genius.ui.widget.SeekBar) findViewById(R.id.stepSeekBar);
 
         stepSeekBar.setOnSeekBarChangeListener(this);
+
+        onOffSwitch = (Switch) findViewById(R.id.switch_on_off);
+        onOffSwitch.setOnCheckedChangeListener(this);
 
         bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheetLayout));
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -484,10 +490,10 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 break;
             case R.id.lowest_button:
-                mBLTLeScanner.writeCustomCharacteristic(202, false);
+                mBLTLeScanner.writeCustomCharacteristic(202, false, deviceDb);
                 break;
             case R.id.highest_button:
-                mBLTLeScanner.writeCustomCharacteristic(201, false);
+                mBLTLeScanner.writeCustomCharacteristic(201, false, deviceDb);
                 break;
             default:
                 break;
@@ -629,6 +635,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     /**
      * Functions for the seekbar and changing brightness value
+     * Also function for switch
      *
      * @param seekBar
      */
@@ -636,16 +643,21 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void onProgressChanged(net.qiujuer.genius.ui.widget.SeekBar seekBar, int progress, boolean fromUser) {
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
 
+        onOffSwitch.setOnCheckedChangeListener(null);
+        if (progress > 0) {
+            onOffSwitch.setChecked(true);
+        } else {
+            onOffSwitch.setChecked(false);
+        }
+        onOffSwitch.setOnCheckedChangeListener(this);
+
         try {
-            brightnessLabel.setText(String.valueOf(progress * 10));
 
             //TODO: groups button rename
             if (buttonTitle.equals("Groups")) {
-                mBLTLeScanner.writeCustomCharacteristic(progress * 10, false);
+                mBLTLeScanner.writeCustomCharacteristic(progress * 10, false, deviceDb);
             } else {
-
-                mBLTLeScanner.writeCustomCharacteristic(progress * 10, true);
-
+                mBLTLeScanner.writeCustomCharacteristic(progress * 10, true, deviceDb);
             }
         } catch (Exception e) {
             Log.d("Exception: ", e.getLocalizedMessage());
@@ -660,6 +672,24 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     public void onStopTrackingTouch(net.qiujuer.genius.ui.widget.SeekBar seekBar) {
 
+    }
+
+
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean isOn) {
+        String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
+
+        try {
+
+            if (buttonTitle.equals("Groups")) {
+                mBLTLeScanner.updateSwitchBrightness(false, deviceDb, isOn);
+            } else {
+                mBLTLeScanner.updateSwitchBrightness(true, deviceDb, isOn);
+            }
+
+        } catch (Exception e) {
+
+        }
     }
 
     /************************************************************************************************/
