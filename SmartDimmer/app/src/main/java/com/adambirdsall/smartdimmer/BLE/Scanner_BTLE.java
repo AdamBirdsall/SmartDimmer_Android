@@ -18,10 +18,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
+import android.support.design.widget.BottomSheetBehavior;
 import android.util.Log;
 
 import com.adambirdsall.smartdimmer.Activities.DiscoveryActivity;
 import com.adambirdsall.smartdimmer.R;
+import com.adambirdsall.smartdimmer.Utils.DeviceDatabase;
+import com.adambirdsall.smartdimmer.Utils.DeviceObject;
 import com.adambirdsall.smartdimmer.Utils.Utils;
 
 import java.util.ArrayList;
@@ -30,6 +33,7 @@ import java.util.UUID;
 
 /**
  * Created by AdamBirdsall on 7/25/17.
+ * @author AdamBirdsall
  */
 
 public class Scanner_BTLE extends DiscoveryActivity {
@@ -42,11 +46,12 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
     private List<BluetoothGatt> groupOfDevices;
 
-
     private ScanSettings settings;
     private List<ScanFilter> filters;
 
     private boolean mScanning;
+    private boolean isSetupView;
+    private boolean isGroupsView;
     private Handler mHandler;
 
     private long scanPeriod;
@@ -178,53 +183,85 @@ public class Scanner_BTLE extends DiscoveryActivity {
     };
 
 
-    public boolean disconnectFromDevice(boolean isGroups, String deviceAddress) {
+    public void disconnectFromDevice(boolean isGroups, String deviceAddress, boolean isSetup) {
 
         try {
 
-            if (isGroups) {
+            if (isSetup) {
 
-                // Clear all with null
-                if (deviceAddress == null) {
-                    for (BluetoothGatt disconnectGatt : groupOfDevices) {
-                        disconnectGatt.close();
-                        disconnectGatt.disconnect();
-                    }
-
-                    groupOfDevices.clear();
-                } else {
-
-                    for (BluetoothGatt disconnectGatt : groupOfDevices) {
-
-                        if (disconnectGatt.getDevice().getAddress().equals(deviceAddress)) {
-                            disconnectGatt.close();
-                            disconnectGatt.disconnect();
-                            groupOfDevices.remove(disconnectGatt);
-                        }
-                    }
-                }
-
-            } else {
                 mBluetoothGatt.close();
                 mBluetoothGatt.disconnect();
                 mBluetoothGatt = null;
-            }
 
-            return true;
+                ma.setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                ma.renameTextEdit.setText("");
+                ma.mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("");
+
+            } else {
+                if (isGroups) {
+
+                    // Clear all with null
+                    if (deviceAddress == null) {
+                        for (BluetoothGatt disconnectGatt : groupOfDevices) {
+                            disconnectGatt.close();
+                            disconnectGatt.disconnect();
+                        }
+
+                        groupOfDevices.clear();
+                    } else {
+
+                        for (BluetoothGatt disconnectGatt : groupOfDevices) {
+
+                            if (disconnectGatt.getDevice().getAddress().equals(deviceAddress)) {
+                                disconnectGatt.close();
+                                disconnectGatt.disconnect();
+                                groupOfDevices.remove(disconnectGatt);
+                            }
+                        }
+                    }
+
+                } else {
+                    mBluetoothGatt.close();
+                    mBluetoothGatt.disconnect();
+                    mBluetoothGatt = null;
+                }
+
+                ma.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
         } catch (Exception e) {
-            return false;
+            Utils.toast(getApplicationContext(), "Failed to disconnect");
         }
     }
 
-    public void connectToDevice(BluetoothDevice bluetoothDevice, boolean isGroups) {
+    public void connectToDevice(BluetoothDevice bluetoothDevice, boolean isGroups, DeviceDatabase deviceDb, boolean isSetup) {
+
+        this.isSetupView = isSetup;
+        String deviceName = "";
+        List<DeviceObject> allDevices = deviceDb.getAllDevices();
+        for (DeviceObject deviceObject : allDevices) {
+            if (deviceObject.getMacAddress().equals(bluetoothDevice.getAddress())) {
+                deviceName = deviceObject.getDeviceName();
+            }
+        }
 
         if (isGroups) {
+            this.isGroupsView = true;
             BluetoothGatt groupsGatt = bluetoothDevice.connectGatt(this, false, btleGattCallback);
             groupOfDevices.add(groupsGatt);
             scanLeDevice(false);
 
         } else {
+            this.isGroupsView = false;
             if (mBluetoothGatt == null) {
+
+                if (isSetup) {
+                    if (deviceName.equals("")) {
+                        ma.renameTextEdit.setText(bluetoothDevice.getName());
+                    } else {
+                        ma.renameTextEdit.setText(deviceName);
+                    }
+                }
+
                 mBluetoothGatt = bluetoothDevice.connectGatt(this, false, btleGattCallback);
                 scanLeDevice(false);// will stop after first device detection
             }
@@ -234,7 +271,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
     private final BluetoothGattCallback btleGattCallback = new BluetoothGattCallback() {
 
         @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+        public void onConnectionStateChange(final BluetoothGatt gatt, int status, int newState) {
             Log.i("onConnectionStateChange", "Status: " + status);
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
@@ -252,6 +289,14 @@ public class Scanner_BTLE extends DiscoveryActivity {
                             } else {
                                 ma.mainListView.setClickable(true);
                                 ma.mainListView.setEnabled(true);
+                            }
+
+                            if (isSetupView) {
+                                ma.setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+                            } else {
+                                if (!isGroupsView) {
+                                    ma.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                                }
                             }
                         }
                     });
@@ -349,5 +394,26 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
             }
         }
+    }
+
+    /**
+     * SQL functions to update values
+     */
+    public void updateDeviceName(String nameText, DeviceDatabase deviceDb) {
+
+        DeviceObject updateDevice = new DeviceObject();
+
+        // If the user deletes the text in the text box, set name to the original device name
+        if (nameText.equals("")) {
+            updateDevice.setDeviceName(mBluetoothGatt.getDevice().getName());
+        } else {
+            updateDevice.setDeviceName(nameText);
+        }
+
+        updateDevice.setMacAddress(mBluetoothGatt.getDevice().getAddress());
+        updateDevice.setBrightnessValue("0");
+        updateDevice.setPreviousValue("0");
+
+        deviceDb.updateDevice(updateDevice);
     }
 }

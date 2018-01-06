@@ -2,6 +2,7 @@ package com.adambirdsall.smartdimmer.BLE;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import java.util.List;
 
 /**
  * Created by AdamBirdsall on 7/25/17.
+ * @author AdamBirdsall
  */
 
 public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {

@@ -68,11 +68,10 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
     private ArrayList<DeviceItem> mBTDevicesArrayList;
     private ListAdapter_BTLE_Devices adapter;
-    private ArrayList<DeviceItem> selectedGroupsArrayList;
 
     // BottomSheetBehavior variable
-    private BottomSheetBehavior bottomSheetBehavior;
-    private BottomSheetBehavior setup_bottomSheet;
+    public BottomSheetBehavior bottomSheetBehavior;
+    public BottomSheetBehavior setup_bottomSheet;
 
     // Text view variables
     public TextView connectedLabel;
@@ -92,7 +91,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
     private Scanner_BTLE mBLTLeScanner;
-    private List<BluetoothGatt> groupsList;
     private BluetoothGatt mainBleGatt;
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
@@ -156,8 +154,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
         }
 
-        groupsList = new ArrayList<>();
-
         mBTStateUpdateReceiver = new BroadcastReceiver_BTState(getApplicationContext());
         mBLTLeScanner = new Scanner_BTLE(this, 3000, -75);
 
@@ -204,6 +200,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                         mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
 
                         disconnectFromDevices();
+
                         break;
                     case BottomSheetBehavior.STATE_EXPANDED:
                         mainToolbar.getMenu().findItem(R.id.action_groups).setEnabled(false);
@@ -214,6 +211,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                         mainToolbar.setEnabled(false);
                         mainDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                         findViewById(R.id.drawer_layout).setEnabled(false);
+
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -350,13 +348,13 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             if (buttonTitle.equals("Groups")) {
 
-                mBLTLeScanner.disconnectFromDevice(false, null);
+                mBLTLeScanner.disconnectFromDevice(false, null, false);
 
                 mainBleGatt = null;
 
             } else {
 
-                mBLTLeScanner.disconnectFromDevice(true, null);
+                mBLTLeScanner.disconnectFromDevice(true, null, true);
 
                 mainBleGatt = null;
             }
@@ -455,49 +453,35 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 if (buttonTitle.equals("Groups")) {
 
-                    mBLTLeScanner.disconnectFromDevice(false, null);
+                    mBLTLeScanner.disconnectFromDevice(false, null, false);
 
                     mainBleGatt = null;
 
                 } else {
 
-                    mBLTLeScanner.disconnectFromDevice(true, null);
+                    mBLTLeScanner.disconnectFromDevice(true, null, false);
                 }
 
                 mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
 
                 int childCount = mainListView.getChildCount();
                 for (int i = 0; i < childCount; i++) {
-                    mainListView.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
+                    mainListView.getChildAt(i).setBackgroundColor(Color.WHITE);
                 }
 
                 break;
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
-                didDisconnect = mBLTLeScanner.disconnectFromDevice(false, null);
-                if (didDisconnect) {
 
-                    // TODO: device is now in Scanner_BTLE mainBLEGatt is always null
-                    DeviceObject updateDevice = new DeviceObject();
-                    updateDevice.setMacAddress(mainBleGatt.getDevice().getAddress());
-                    updateDevice.setDeviceName(renameTextEdit.getText().toString());
-                    updateDevice.setBrightnessValue("0");
-                    updateDevice.setPreviousValue("0");
-
-                    deviceDb.updateDevice(updateDevice);
-
-                    setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-                    // TODO: Groups button rename
-                    mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("");
-
-                    mainBleGatt = null;
-
-                } else {
-                    // Failed to disconnect
-                    Utils.toast(getApplicationContext(), "Failed to disconnect");
+                if (renameTextEdit.getText().length() != 0) {
+                    // Update the name of the device
+                    mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
                 }
+
+                mBLTLeScanner.disconnectFromDevice(false, null, true);
+                mainBleGatt = null;
+
                 break;
             case R.id.lowest_button:
                 mBLTLeScanner.writeCustomCharacteristic(202, false);
@@ -526,11 +510,10 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         // If you want to select a single device
         if (buttonTitle.equals("Groups") || buttonTitle.equals("")) {
-            mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), false);
             if (setupFlag) {
-                setup_bottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+                mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), false, deviceDb, true);
             } else {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), false, deviceDb, false);
             }
         }
         // If you want to select multiple devices
@@ -539,25 +522,26 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             ColorDrawable listItemColor = (ColorDrawable) parent.getChildAt(position).getBackground();
 
-            if (listItemColor == null || listItemColor.getColor() == Color.TRANSPARENT) {
+            if (listItemColor == null || listItemColor.getColor() == Color.WHITE) {
 
                 // connect and change color
-                mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), true);
+                mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), true, deviceDb, false);
 
-                // TODO: set with nice color and checkmark picture
                 parent.getChildAt(position).setBackgroundColor(Color.parseColor("#bee2f3"));
 
             } else {
                 // disconnect and put transparent color
 
-                boolean didDisconnect = mBLTLeScanner.disconnectFromDevice(true, deviceItem.getAddress());
+                mBLTLeScanner.disconnectFromDevice(true, deviceItem.getAddress(), false);
+                parent.getChildAt(position).setBackgroundColor(Color.WHITE);
+                Utils.toast(getApplicationContext(), "Failed to disconnect");
 
-                if (didDisconnect) {
-                    parent.getChildAt(position).setBackgroundColor(Color.TRANSPARENT);
-                } else {
-                    // Failed to disconnect
-                    Utils.toast(getApplicationContext(), "Failed to disconnect");
-                }
+//                if (didDisconnect) {
+//                    parent.getChildAt(position).setBackgroundColor(Color.WHITE);
+//                } else {
+//                    // Failed to disconnect
+//                    Utils.toast(getApplicationContext(), "Failed to disconnect");
+//                }
             }
         }
     }
@@ -685,7 +669,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
      * @param new_rssi
      */
     public void addDevice(BluetoothDevice device, int new_rssi) {
-//        String address = device.getAddress();
 
         if (device.getName() == null || device.getName().length() == 0) {
             return;
@@ -695,7 +678,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             System.out.println(newDevice);
 
-            if (newDevice.getName() != null) {
+            if (newDevice.getName() != null && newDevice.getName().contains("SmartDimmer")) {
                 mBTDevicesHashMap.put(newDevice.getAddress(), newDevice);
                 mBTDevicesArrayList.add(newDevice);
 
@@ -741,7 +724,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void stopScan() {
         mainListView.setEnabled(true);
 
-//        mBLTLeScanner.stop();
+        if (mainListView.getChildCount() == 0) {
+            Utils.toast(getApplicationContext(), "No devices found. Be sure you are in range or turn Bluetooth off, then on again.");
+        }
 
         if (setupFlag) {
             setupSwipeRefresh.setRefreshing(false);
