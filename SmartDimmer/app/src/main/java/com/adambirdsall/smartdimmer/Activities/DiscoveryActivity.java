@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -31,6 +32,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -316,6 +318,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                         mainListView.setEnabled(true);
                         mainDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
+                        findViewById(R.id.bg).setAlpha((float)0.0);
+
                         disconnectFromDevices();
                         break;
 
@@ -525,6 +529,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 break;
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
+
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(renameTextEdit.getWindowToken(), 0);
 
                 // Update the name of the device
                 mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
