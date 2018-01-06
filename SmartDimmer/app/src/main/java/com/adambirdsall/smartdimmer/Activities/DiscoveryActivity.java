@@ -14,7 +14,9 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -90,6 +92,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private SwipeRefreshLayout setupSwipeRefresh;
     private DrawerLayout mainDrawer;
     private Switch onOffSwitch;
+    private FloatingActionButton fab;
 
     // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
@@ -104,6 +107,20 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         setContentView(R.layout.activity_discovery);
 
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                cancelGroupsView();
+
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+            }
+        });
+
+        fab.setVisibility(View.INVISIBLE);
 
         deviceDb = new DeviceDatabase(this);
         listOfDevices = deviceDb.getAllDevices();
@@ -440,6 +457,17 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         }
     }
 
+    public void cancelGroupsView() {
+        mBLTLeScanner.disconnectFromDevice(true, null, false);
+        mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
+        fab.setVisibility(View.INVISIBLE);
+
+        int childCount = mainListView.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            mainListView.getChildAt(i).setBackgroundColor(Color.WHITE);
+        }
+    }
+
     /************************************************************************************************/
 
     /**
@@ -568,10 +596,12 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             if (item.getTitle().equals("Groups")) {
 
                 item.setTitle("Connect");
+                fab.setVisibility(View.VISIBLE);
 
             } else { // Else if the title is 'Connect'
 
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                fab.setVisibility(View.INVISIBLE);
             }
 
             return true;
