@@ -19,21 +19,22 @@
             android:background="#ffffff"
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
-            <ImageView
-                android:id="@+id/toolbarImage"
-                android:layout_width="wrap_content"
-                android:contentDescription="none"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:src="@drawable/top_bar_title"/>
 
-            <TextView
-                android:id="@+id/titleTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_gravity="center"
-                android:text="" />
+            <!--<ImageView-->
+                <!--android:id="@+id/toolbarImage"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:contentDescription="none"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center"-->
+                <!--android:src="@drawable/top_bar_title"/>-->
+
+            <!--<TextView-->
+                <!--android:id="@+id/titleTextView"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center"-->
+                <!--android:layout_weight="1"-->
+                <!--android:text="" />-->
 
         </android.support.v7.widget.Toolbar>
 
@@ -50,7 +51,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_delete" />
+        app:srcCompat="@android:drawable/ic_delete"
+        android:tint="@color/white"
+        app:backgroundTint="@color/red_500" />
 
     <!-- Bottom Sheet Content -->
     <include layout="@layout/content_bottom_sheet" />

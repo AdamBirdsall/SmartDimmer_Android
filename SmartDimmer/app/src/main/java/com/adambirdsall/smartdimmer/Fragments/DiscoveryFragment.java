@@ -5,11 +5,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.adambirdsall.smartdimmer.Activities.DiscoveryActivity;
 import com.adambirdsall.smartdimmer.R;
 import com.adambirdsall.smartdimmer.Utils.EventListener;
 
@@ -39,11 +42,6 @@ public class DiscoveryFragment extends Fragment {
         listener.disconnectFromDevices();
 
         listener.discoveryVariables();
-
-        TextView titleTextview = (TextView) getActivity().findViewById(R.id.titleTextView);
-        titleTextview.setVisibility(View.INVISIBLE);
-
-        getActivity().findViewById(R.id.toolbarImage).setVisibility(View.VISIBLE);
     }
 
     @Nullable

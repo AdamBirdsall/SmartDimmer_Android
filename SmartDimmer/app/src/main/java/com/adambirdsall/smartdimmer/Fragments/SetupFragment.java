@@ -4,16 +4,19 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.adambirdsall.smartdimmer.Activities.DiscoveryActivity;
 import com.adambirdsall.smartdimmer.R;
 import com.adambirdsall.smartdimmer.Utils.EventListener;
 
 /**
  * Created by AdamBirdsall on 10/10/17.
+ * @author AdamBirdsall
  */
 
 public class SetupFragment extends Fragment {
@@ -37,12 +40,6 @@ public class SetupFragment extends Fragment {
         listener.disconnectFromDevices();
 
         listener.setupVariables();
-
-        TextView titleTextview = (TextView) getActivity().findViewById(R.id.titleTextView);
-        titleTextview.setVisibility(View.VISIBLE);
-        titleTextview.setText("Setup");
-
-        getActivity().findViewById(R.id.toolbarImage).setVisibility(View.INVISIBLE);
     }
 
     @Nullable

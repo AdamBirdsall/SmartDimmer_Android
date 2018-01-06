@@ -33,6 +33,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -93,6 +94,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private DrawerLayout mainDrawer;
     private Switch onOffSwitch;
     private FloatingActionButton fab;
+    public ImageView titleImageView;
 
     // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
@@ -107,6 +109,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         setContentView(R.layout.activity_discovery);
 
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+        titleImageView = new ImageView(getApplicationContext());
+        titleImageView.setImageResource(R.drawable.top_bar_title);
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -205,6 +210,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         onOffSwitch = (Switch) findViewById(R.id.switch_on_off);
         onOffSwitch.setOnCheckedChangeListener(this);
 
+        mainToolbar.addView(titleImageView);
+
         bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheetLayout));
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
@@ -291,6 +298,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         connectedLabel = (TextView) findViewById(R.id.setup_connectedLabel);
         renameTextEdit = (net.qiujuer.genius.ui.widget.EditText) findViewById(R.id.renameText);
 
+        mainToolbar.removeView(titleImageView);
+        mainToolbar.setTitle("Setup");
+
         setup_bottomSheet = BottomSheetBehavior.from(findViewById(R.id.setupSheetLayout));
         setup_bottomSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
@@ -356,6 +366,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     @Override
     public void helpVariables() {
+
+        mainToolbar.removeView(titleImageView);
+        mainToolbar.setTitle("Help");
 
     }
 
@@ -516,10 +529,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
 
-                if (renameTextEdit.getText().length() != 0) {
-                    // Update the name of the device
-                    mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
-                }
+                // Update the name of the device
+                mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
 
                 mBLTLeScanner.disconnectFromDevice(false, null, true);
                 mainBleGatt = null;
