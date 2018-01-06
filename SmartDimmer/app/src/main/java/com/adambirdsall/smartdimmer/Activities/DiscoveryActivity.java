@@ -469,6 +469,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 mainToolbar.getMenu().findItem(R.id.action_groups).setTitle("Groups");
 
+                stepSeekBar.setOnSeekBarChangeListener(null);
+                onOffSwitch.setOnCheckedChangeListener(null);
+
+                stepSeekBar.setProgress(0);
+                onOffSwitch.setChecked(false);
+                brightnessLabel.setText("0");
+
+                stepSeekBar.setOnSeekBarChangeListener(this);
+                onOffSwitch.setOnCheckedChangeListener(this);
 
                 int childCount = mainListView.getChildCount();
                 for (int i = 0; i < childCount; i++) {
