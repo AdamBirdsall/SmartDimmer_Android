@@ -377,6 +377,10 @@ public class Scanner_BTLE extends DiscoveryActivity {
                         @Override
                         public void run() {
                             ma.brightnessLabel.setText(String.valueOf(value));
+
+                            if (switchClicked) {
+                                ma.stepSeekBar.setProgress(value/10);
+                            }
                         }
                     });
 
@@ -461,18 +465,30 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
     public void updateSwitchBrightness(boolean isGroups, DeviceDatabase deviceDb, boolean isOn) {
 
-        DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
-
         switchClicked = true;
 
-        // Device turns on, sets brightness of previous value
-        if (isOn) {
+        if (isGroups) {
 
-            writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), isGroups, deviceDb);
+            if (isOn) {
+                DeviceObject updateDevice = deviceDb.getDevice(groupOfDevices.get(0).getDevice().getAddress());
+
+                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), true, deviceDb);
+            } else {
+                writeCustomCharacteristic(0, true, deviceDb);
+            }
 
         } else {
+            DeviceObject updateDevice = deviceDb.getDevice(mBluetoothGatt.getDevice().getAddress());
 
-            writeCustomCharacteristic(0, isGroups, deviceDb);
+            // Device turns on, sets brightness of previous value
+            if (isOn) {
+
+                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), false, deviceDb);
+
+            } else {
+
+                writeCustomCharacteristic(0, false, deviceDb);
+            }
         }
     }
 }
