@@ -147,27 +147,22 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             finish();
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Allow Location for Bluetooth?");
-                builder.setMessage("Please allow this app to access location to use Bluetooth on your device");
-                builder.setPositiveButton(android.R.string.ok, null);
-                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
-                    }
-                });
-                builder.show();
-            }
-        }
-
         displayFragment(R.id.nav_discover);
     }
 
     @Override
     public void discoveryVariables() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+            } else {
+                setDiscoverVariables();
+            }
+        }
+    }
+
+    public void setDiscoverVariables() {
 
         setupFlag = false;
         discoverFlag = true;
@@ -406,6 +401,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             case PERMISSION_REQUEST_COARSE_LOCATION: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.d(TAG, "coarse location permission granted");
+                    setDiscoverVariables();
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Functionality limited");
@@ -443,14 +439,11 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     protected void onPause() {
         super.onPause();
-
-        stopScan();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(mBTStateUpdateReceiver);
         stopScan();
     }
 
