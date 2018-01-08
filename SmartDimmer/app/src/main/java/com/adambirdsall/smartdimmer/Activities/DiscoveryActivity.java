@@ -2,13 +2,11 @@ package com.adambirdsall.smartdimmer.Activities;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -388,7 +386,18 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 mBLTLeScanner.disconnectFromDevice(true, null, true);
 
+                int childCount = mainListView.getChildCount();
+                for (int i = 0; i < childCount; i++) {
+                    mainListView.getChildAt(i).setBackgroundColor(Color.WHITE);
+                }
+
                 mainBleGatt = null;
+            }
+
+            if (setupFlag) {
+                setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            } else {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         }
     }
@@ -425,10 +434,12 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         return true;
     }
 
+    /**
+     * Life Cycle functions
+     */
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(mBTStateUpdateReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
     }
 
     @Override
@@ -444,12 +455,14 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     protected void onStop() {
         super.onStop();
+        disconnectFromDevices();
         stopScan();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        disconnectFromDevices();
     }
 
     @Override
