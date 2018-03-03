@@ -27,13 +27,15 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
     Activity activity;
     int layoutResourceID;
     ArrayList<DeviceItem> devices;
+    private boolean isSetupView;
 
     private DeviceDatabase deviceDb;
 
-    public ListAdapter_BTLE_Devices(Activity activity, int resource, ArrayList<DeviceItem> objects) {
+    public ListAdapter_BTLE_Devices(Activity activity, int resource, ArrayList<DeviceItem> objects, boolean isSetupView) {
         super(activity.getApplicationContext(), resource, objects);
 
         this.activity = activity;
+        this.isSetupView = isSetupView;
         layoutResourceID = resource;
         devices = objects;
         this.deviceDb = new DeviceDatabase(activity.getApplicationContext());
@@ -73,10 +75,12 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
         }
 
         TextView tv_macAddress = (TextView) convertView.findViewById(R.id.tv_macaddr);
-        if (address != null && address.length() > 0) {
-            tv_macAddress.setText(deviceItem.getAddress());
-        } else {
-            tv_macAddress.setText("No Address");
+        if (isSetupView) {
+            if (address != null && address.length() > 0) {
+                tv_macAddress.setText(deviceItem.getAddress());
+            } else {
+                tv_macAddress.setText("No Address");
+            }
         }
 
         return convertView;

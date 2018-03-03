@@ -248,7 +248,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
         mBluetoothGatt = null;
         mBluetoothService = null;
         writeCharacteristic = null;
-        
+
         this.isSetupView = isSetup;
         String deviceName = "";
         List<DeviceObject> allDevices = deviceDb.getAllDevices();
@@ -415,9 +415,11 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 writeCharacteristic = mBluetoothService.getCharacteristic(writeUUID);
             }
 
-            writeCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
+            writeCharacteristic.setValue(value, android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8, 0);
 
-            updateDevice(mBluetoothGatt.getDevice(), value, deviceDb);
+            if (!isSetupView) {
+                updateDevice(mBluetoothGatt.getDevice(), value, deviceDb);
+            }
 
             if(!mBluetoothGatt.writeCharacteristic(writeCharacteristic)) {
 

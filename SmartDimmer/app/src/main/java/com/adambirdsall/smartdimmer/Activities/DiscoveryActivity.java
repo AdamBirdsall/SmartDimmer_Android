@@ -64,6 +64,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     public boolean setupFlag = false;
     public boolean discoverFlag = false;
+    private boolean mainBleGatt = false;
 
     // Database
     private DeviceDatabase deviceDb;
@@ -99,7 +100,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     // Bluetooth variables
     private BroadcastReceiver_BTState mBTStateUpdateReceiver;
     private Scanner_BTLE mBLTLeScanner;
-    private BluetoothGatt mainBleGatt;
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
@@ -177,7 +177,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         mBTDevicesHashMap = new HashMap<>();
         mBTDevicesArrayList = new ArrayList<>();
 
-        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList);
+        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList, false);
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
@@ -272,7 +272,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         mBTDevicesHashMap = new HashMap<>();
         mBTDevicesArrayList = new ArrayList<>();
 
-        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList);
+        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList, true);
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
@@ -370,7 +370,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     public void disconnectFromDevices() {
 
-        if (mainBleGatt == null) {
+        if (mainBleGatt == false) {
             return;
         } else {
 
@@ -380,7 +380,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 mBLTLeScanner.disconnectFromDevice(false, null, false);
 
-                mainBleGatt = null;
+                mainBleGatt = false;
 
             } else {
 
@@ -391,7 +391,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     mainListView.getChildAt(i).setBackgroundColor(Color.WHITE);
                 }
 
-                mainBleGatt = null;
+                mainBleGatt = false;
             }
 
             if (setupFlag) {
@@ -508,7 +508,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                     mBLTLeScanner.disconnectFromDevice(false, null, false);
 
-                    mainBleGatt = null;
+                    mainBleGatt = false;
 
                 } else {
 
@@ -536,6 +536,8 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
 
+                mBLTLeScanner.writeCustomCharacteristic(0, false, deviceDb, true);
+
                 InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(renameTextEdit.getWindowToken(), 0);
 
@@ -543,7 +545,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
 
                 mBLTLeScanner.disconnectFromDevice(false, null, true);
-                mainBleGatt = null;
+                mainBleGatt = false;
 
                 break;
             case R.id.lowest_button:
@@ -599,6 +601,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 parent.getChildAt(position).setBackgroundColor(Color.WHITE);
             }
         }
+        mainBleGatt = true;
     }
 
     /**
