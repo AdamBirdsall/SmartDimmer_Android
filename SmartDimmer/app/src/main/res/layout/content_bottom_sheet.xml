@@ -29,7 +29,7 @@
 
     <net.qiujuer.genius.ui.widget.SeekBar
         android:id="@+id/stepSeekBar"
-        android:layout_width="225dp"
+        android:layout_width="275dp"
         android:layout_height="20dp"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
@@ -84,9 +84,10 @@
         android:id="@+id/switch_on_off"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/disconnect_button"
+        android:checked="false"
+        android:layout_alignParentBottom="true"
         android:layout_alignStart="@+id/stepSeekBar"
-        android:checked="false"/>
+        android:layout_marginStart="25dp" />
 
     <TextView
         android:id="@+id/textView"
@@ -102,6 +103,6 @@
         android:layout_height="wrap_content"
         android:text="Off"
         android:layout_alignTop="@+id/switch_on_off"
-        android:layout_toStartOf="@+id/switch_on_off" />
+        android:layout_alignStart="@+id/stepSeekBar" />
 
 </RelativeLayout>

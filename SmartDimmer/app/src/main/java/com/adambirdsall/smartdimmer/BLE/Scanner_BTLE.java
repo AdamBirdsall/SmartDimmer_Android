@@ -245,6 +245,10 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
     public void connectToDevice(BluetoothDevice bluetoothDevice, boolean isGroups, DeviceDatabase deviceDb, boolean isSetup) {
 
+        mBluetoothGatt = null;
+        mBluetoothService = null;
+        writeCharacteristic = null;
+        
         this.isSetupView = isSetup;
         String deviceName = "";
         List<DeviceObject> allDevices = deviceDb.getAllDevices();
