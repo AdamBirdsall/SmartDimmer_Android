@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/disconnect" />
+        android:text="Save and Exit" />
 
     <TextView
         android:id="@+id/setup_connectedLabel"

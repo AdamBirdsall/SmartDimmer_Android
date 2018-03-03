@@ -522,7 +522,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 stepSeekBar.setProgress(0);
                 onOffSwitch.setChecked(false);
-                brightnessLabel.setText("0");
+                brightnessLabel.setText("0%");
 
                 stepSeekBar.setOnSeekBarChangeListener(this);
                 onOffSwitch.setOnCheckedChangeListener(this);
@@ -547,10 +547,10 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
                 break;
             case R.id.lowest_button:
-                mBLTLeScanner.writeCustomCharacteristic(202, false, deviceDb);
+                mBLTLeScanner.writeCustomCharacteristic(202, false, deviceDb, true);
                 break;
             case R.id.highest_button:
-                mBLTLeScanner.writeCustomCharacteristic(201, false, deviceDb);
+                mBLTLeScanner.writeCustomCharacteristic(201, false, deviceDb, true);
                 break;
             default:
                 break;
@@ -711,9 +711,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             //TODO: groups button rename
             if (buttonTitle.equals("Groups")) {
-                mBLTLeScanner.writeCustomCharacteristic(progress * 10, false, deviceDb);
+                mBLTLeScanner.writeCustomCharacteristic(progress * 10, false, deviceDb, false);
             } else {
-                mBLTLeScanner.writeCustomCharacteristic(progress * 10, true, deviceDb);
+                mBLTLeScanner.writeCustomCharacteristic(progress * 10, true, deviceDb, false);
             }
         } catch (Exception e) {
             Log.d("Exception: ", e.getLocalizedMessage());

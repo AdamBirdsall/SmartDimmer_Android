@@ -43,6 +43,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGattCharacteristic writeCharacteristic;
+    private BluetoothGattService mBluetoothService;
     private BluetoothLeScanner bluetoothLeScanner;
 
     public List<BluetoothGatt> groupOfDevices;
@@ -125,6 +126,8 @@ public class Scanner_BTLE extends DiscoveryActivity {
         }
         mBluetoothGatt.close();
         mBluetoothGatt = null;
+        mBluetoothService = null;
+        writeCharacteristic = null;
         super.onDestroy();
     }
 
@@ -195,6 +198,8 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 mBluetoothGatt.close();
                 mBluetoothGatt.disconnect();
                 mBluetoothGatt = null;
+                mBluetoothService = null;
+                writeCharacteristic = null;
 
                 ma.setup_bottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 ma.renameTextEdit.setText("");
@@ -227,6 +232,8 @@ public class Scanner_BTLE extends DiscoveryActivity {
                     mBluetoothGatt.close();
                     mBluetoothGatt.disconnect();
                     mBluetoothGatt = null;
+                    mBluetoothService = null;
+                    writeCharacteristic = null;
                 }
 
                 ma.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -265,7 +272,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
                     }
                 }
 
-                mBluetoothGatt = bluetoothDevice.connectGatt(this, false, btleGattCallback);
+                mBluetoothGatt = bluetoothDevice.connectGatt(this, true, btleGattCallback);
                 scanLeDevice(false);// will stop after first device detection
             }
         }
@@ -328,9 +335,8 @@ public class Scanner_BTLE extends DiscoveryActivity {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
 
-            BluetoothGattService service = gatt.getService(serviceUUID);
-            final BluetoothGattCharacteristic characteristic = service.getCharacteristic(writeUUID);
-            writeCharacteristic = characteristic;
+            mBluetoothService = gatt.getService(serviceUUID);
+            writeCharacteristic = mBluetoothService.getCharacteristic(writeUUID);
         }
 
         @Override
@@ -343,7 +349,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
     };
 
 
-    public void writeCustomCharacteristic(final int value, boolean isGroups, DeviceDatabase deviceDb) {
+    public void writeCustomCharacteristic(final int value, boolean isGroups, DeviceDatabase deviceDb, boolean isSetupView) {
 
         if (bluetoothAdapter == null) {
             return;
@@ -367,7 +373,9 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(writeUUID);
                 mWriteCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
 
-                updateDevice(writeToGatt.getDevice(), value, deviceDb);
+                if (!isSetupView) {
+                    updateDevice(writeToGatt.getDevice(), value, deviceDb);
+                }
 
                 if(!writeToGatt.writeCharacteristic(mWriteCharacteristic)) {
 
@@ -376,7 +384,8 @@ public class Scanner_BTLE extends DiscoveryActivity {
                     ma.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            ma.brightnessLabel.setText(String.valueOf(value));
+                            String brightnessValue = String.valueOf(value) + "%";
+                            ma.brightnessLabel.setText(brightnessValue);
 
                             if (switchClicked) {
                                 ma.stepSeekBar.setProgress(value/10);
@@ -394,25 +403,26 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 return;
             }
 
-            /*check if the service is available on the device*/
-            BluetoothGattService mCustomService = mBluetoothGatt.getService(serviceUUID);
-            if(mCustomService == null){
-                return;
+            if (mBluetoothService == null) {
+                mBluetoothService = mBluetoothGatt.getService(serviceUUID);
             }
 
-            /*get the read characteristic from the service*/
-            BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(writeUUID);
-            mWriteCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
+            if (writeCharacteristic == null) {
+                writeCharacteristic = mBluetoothService.getCharacteristic(writeUUID);
+            }
+
+            writeCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
 
             updateDevice(mBluetoothGatt.getDevice(), value, deviceDb);
 
-            if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)) {
+            if(!mBluetoothGatt.writeCharacteristic(writeCharacteristic)) {
 
             } else {
                 ma.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ma.brightnessLabel.setText(String.valueOf(value));
+                        String brightnessValue = String.valueOf(value) + "%";
+                        ma.brightnessLabel.setText(brightnessValue);
 
                         if (switchClicked) {
                             ma.stepSeekBar.setProgress(value/10);
@@ -472,9 +482,9 @@ public class Scanner_BTLE extends DiscoveryActivity {
             if (isOn) {
                 DeviceObject updateDevice = deviceDb.getDevice(groupOfDevices.get(0).getDevice().getAddress());
 
-                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), true, deviceDb);
+                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), true, deviceDb, false);
             } else {
-                writeCustomCharacteristic(0, true, deviceDb);
+                writeCustomCharacteristic(0, true, deviceDb, false);
             }
 
         } else {
@@ -483,11 +493,11 @@ public class Scanner_BTLE extends DiscoveryActivity {
             // Device turns on, sets brightness of previous value
             if (isOn) {
 
-                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), false, deviceDb);
+                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), false, deviceDb, false);
 
             } else {
 
-                writeCustomCharacteristic(0, false, deviceDb);
+                writeCustomCharacteristic(0, false, deviceDb, false);
             }
         }
     }

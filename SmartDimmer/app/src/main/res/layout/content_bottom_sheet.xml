@@ -15,7 +15,7 @@
         android:id="@+id/disconnect_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Disconnect"
+        android:text="Save and Exit"
         android:layout_alignParentBottom="true"
         android:layout_alignEnd="@+id/brightnessLabel" />
 
@@ -53,9 +53,9 @@
         app:gScrubberColor="#bee2f3"
         app:gScrubberStroke="4dp"
         app:gThumbColor="#289dd8"
-        app:gThumbSize="6dp"
+        app:gThumbSize="12dp"
         app:gTickSize="3dp"
-        app:gTouchSize="12dp"
+        app:gTouchSize="18dp"
         app:gTrackColor="@color/grey_500"
         app:gTrackStroke="2dp"
 
@@ -75,7 +75,7 @@
         android:id="@+id/brightnessLabel"
         android:layout_width="300dp"
         android:layout_height="20dp"
-        android:text="0"
+        android:text="0%"
         android:textAlignment="center"
         android:layout_below="@+id/connectedLabel"
         android:layout_centerHorizontal="true" />
@@ -87,5 +87,21 @@
         android:layout_alignTop="@+id/disconnect_button"
         android:layout_alignStart="@+id/stepSeekBar"
         android:checked="false"/>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/switch_on_off"
+        android:layout_toEndOf="@+id/switch_on_off"
+        android:text="On" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Off"
+        android:layout_alignTop="@+id/switch_on_off"
+        android:layout_toStartOf="@+id/switch_on_off" />
 
 </RelativeLayout>
