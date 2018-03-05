@@ -462,7 +462,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     @Override
     protected void onStop() {
         super.onStop();
-        disconnectFromDevices();
+//        disconnectFromDevices();
         stopScan();
     }
 
@@ -834,7 +834,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
         Collections.sort(sortedDevices, new Comparator<SortedDeviceObject>() {
             @Override
             public int compare(SortedDeviceObject t1, SortedDeviceObject t2) {
-                return t1.getDeviceName().compareTo(t2.getDeviceName());
+                return t1.getDeviceName().toUpperCase().compareTo(t2.getDeviceName().toUpperCase());
             }
         });
 
@@ -850,11 +850,14 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             swipeRefreshLayout.setRefreshing(true);
         }
 
+        listOfDevices.clear();
         mBTDevicesArrayList.clear();
         mBTDevicesHashMap.clear();
         sortedDevices.clear();
 
         adapter.notifyDataSetChanged();
+
+        listOfDevices = deviceDb.getAllDevices();
 
         mBLTLeScanner.start();
     }

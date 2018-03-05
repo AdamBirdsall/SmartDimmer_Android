@@ -57,7 +57,6 @@ public class Scanner_BTLE extends DiscoveryActivity {
     private Handler mHandler;
 
     private long scanPeriod;
-    private int signalStrength;
 
     private final UUID serviceUUID = UUID.fromString("00001523-1212-EFDE-1523-785FEABCD123");
     private final UUID writeUUID = UUID.fromString("00001525-1212-EFDE-1523-785FEABCD123");
@@ -68,7 +67,6 @@ public class Scanner_BTLE extends DiscoveryActivity {
         ma = mainActivity;
         mHandler = new Handler();
         this.scanPeriod = scanPeriod;
-        this.signalStrength = signalStrength;
         this.groupOfDevices = new ArrayList<>();
 
         final BluetoothManager bluetoothManager = (BluetoothManager) ma.getSystemService(Context.BLUETOOTH_SERVICE);
