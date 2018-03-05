@@ -486,11 +486,38 @@ public class Scanner_BTLE extends DiscoveryActivity {
         if (isGroups) {
 
             if (isOn) {
-                DeviceObject updateDevice = deviceDb.getDevice(groupOfDevices.get(0).getDevice().getAddress());
 
-                writeCustomCharacteristic(Integer.parseInt(updateDevice.getPreviousValue()), true, deviceDb, false);
+                for (BluetoothGatt groupDevice : groupOfDevices) {
+
+                    DeviceObject updateDevice = deviceDb.getDevice(groupDevice.getDevice().getAddress());
+
+
+                    BluetoothGattService tempService = groupDevice.getService(serviceUUID);
+                    BluetoothGattCharacteristic tempCharacteristic = tempService.getCharacteristic(writeUUID);
+
+                    tempCharacteristic.setValue(Integer.parseInt(updateDevice.getPreviousValue()), android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+
+                    if(!groupDevice.writeCharacteristic(tempCharacteristic)) {
+
+                    } else {
+                        System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
+                    }
+                }
+
             } else {
-                writeCustomCharacteristic(0, true, deviceDb, false);
+                for (BluetoothGatt groupDevice : groupOfDevices) {
+
+                    BluetoothGattService tempService = groupDevice.getService(serviceUUID);
+                    BluetoothGattCharacteristic tempCharacteristic = tempService.getCharacteristic(writeUUID);
+
+                    tempCharacteristic.setValue(0, android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+
+                    if(!groupDevice.writeCharacteristic(tempCharacteristic)) {
+
+                    } else {
+                        System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
+                    }
+                }
             }
 
         } else {

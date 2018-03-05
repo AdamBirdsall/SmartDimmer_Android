@@ -694,7 +694,6 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
     /**
      * Functions for the seekbar and changing brightness value
-     * Also function for switch
      *
      * @param seekBar
      */
@@ -734,6 +733,12 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     }
 
 
+    /**
+     * Function for controlling switch
+     *
+     * @param compoundButton
+     * @param isOn
+     */
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isOn) {
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
