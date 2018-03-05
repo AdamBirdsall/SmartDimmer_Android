@@ -376,7 +376,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
 
-            if (buttonTitle.equals("Groups")) {
+            if (buttonTitle.equals("Connect")) {
 
                 mBLTLeScanner.disconnectFromDevice(false, null, false);
 
@@ -384,7 +384,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
             } else {
 
-                mBLTLeScanner.disconnectFromDevice(true, null, true);
+                mBLTLeScanner.disconnectFromDevice(true, null, false);
 
                 int childCount = mainListView.getChildCount();
                 for (int i = 0; i < childCount; i++) {
