@@ -22,16 +22,16 @@ import java.util.List;
  * @author AdamBirdsall
  */
 
-public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
+public class ListAdapter_BTLE_Devices extends ArrayAdapter<SortedDeviceObject> {
 
     Activity activity;
     int layoutResourceID;
-    ArrayList<DeviceItem> devices;
+    ArrayList<SortedDeviceObject> devices;
     private boolean isSetupView;
 
     private DeviceDatabase deviceDb;
 
-    public ListAdapter_BTLE_Devices(Activity activity, int resource, ArrayList<DeviceItem> objects, boolean isSetupView) {
+    public ListAdapter_BTLE_Devices(Activity activity, int resource, ArrayList<SortedDeviceObject> objects, boolean isSetupView) {
         super(activity.getApplicationContext(), resource, objects);
 
         this.activity = activity;
@@ -49,10 +49,9 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
             convertView = inflater.inflate(layoutResourceID, parent, false);
         }
 
-        DeviceItem deviceItem = devices.get(position);
-        String name = deviceItem.getName();
-        String address = deviceItem.getAddress();
-        int rssi = deviceItem.getRssi();
+        SortedDeviceObject deviceItem = devices.get(position);
+        String name = deviceItem.getDeviceName();
+        String address = deviceItem.getDeviceUuid();
 
         List<DeviceObject> deviceObjectList = deviceDb.getAllDevices();
 
@@ -61,14 +60,14 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
 
             boolean nameExistsFlag = false;
             for (DeviceObject existingObject : deviceObjectList) {
-                if (existingObject.getMacAddress().equals(deviceItem.getAddress())) {
+                if (existingObject.getMacAddress().equals(deviceItem.getDeviceUuid())) {
                     tv_name.setText(existingObject.getDeviceName());
                     nameExistsFlag = true;
                 }
             }
 
             if (!nameExistsFlag) {
-                tv_name.setText(deviceItem.getName());
+                tv_name.setText(deviceItem.getDeviceName());
             }
         } else {
             tv_name.setText("No Name");
@@ -77,7 +76,7 @@ public class ListAdapter_BTLE_Devices extends ArrayAdapter<DeviceItem> {
         TextView tv_macAddress = (TextView) convertView.findViewById(R.id.tv_macaddr);
         if (isSetupView) {
             if (address != null && address.length() > 0) {
-                tv_macAddress.setText(deviceItem.getAddress());
+                tv_macAddress.setText(deviceItem.getDeviceUuid());
             } else {
                 tv_macAddress.setText("No Address");
             }

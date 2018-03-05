@@ -43,6 +43,7 @@ import com.adambirdsall.smartdimmer.BLE.BroadcastReceiver_BTState;
 import com.adambirdsall.smartdimmer.BLE.DeviceItem;
 import com.adambirdsall.smartdimmer.BLE.ListAdapter_BTLE_Devices;
 import com.adambirdsall.smartdimmer.BLE.Scanner_BTLE;
+import com.adambirdsall.smartdimmer.BLE.SortedDeviceObject;
 import com.adambirdsall.smartdimmer.Fragments.DiscoveryFragment;
 import com.adambirdsall.smartdimmer.Fragments.HelpFragment;
 import com.adambirdsall.smartdimmer.Fragments.SetupFragment;
@@ -53,6 +54,8 @@ import com.adambirdsall.smartdimmer.Utils.EventListener;
 import com.adambirdsall.smartdimmer.Utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -69,6 +72,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     // Database
     private DeviceDatabase deviceDb;
     private List<DeviceObject> listOfDevices;
+    private ArrayList<SortedDeviceObject> sortedDevices;
 
     // Device maps and arrays
     private HashMap<String, DeviceItem> mBTDevicesHashMap;
@@ -176,8 +180,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mBTDevicesHashMap = new HashMap<>();
         mBTDevicesArrayList = new ArrayList<>();
+        sortedDevices = new ArrayList<>();
 
-        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList, false);
+        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, sortedDevices, false);
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
@@ -271,8 +276,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mBTDevicesHashMap = new HashMap<>();
         mBTDevicesArrayList = new ArrayList<>();
+        sortedDevices = new ArrayList<>();
 
-        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, mBTDevicesArrayList, true);
+        adapter = new ListAdapter_BTLE_Devices(this, R.layout.btle_device_list_item, sortedDevices, true);
 
         mainListView = new ListView(this);
         mainListView.setAdapter(adapter);
@@ -354,6 +360,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mBTDevicesHashMap.clear();
         mBTDevicesArrayList.clear();
+        sortedDevices.clear();
 
         startScan();
     }
@@ -577,7 +584,14 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
         String buttonTitle = mainToolbar.getMenu().findItem(R.id.action_groups).getTitle().toString();
-        DeviceItem deviceItem = (DeviceItem) parent.getItemAtPosition(position);
+        SortedDeviceObject sortedDevice = (SortedDeviceObject) parent.getItemAtPosition(position);
+        DeviceItem deviceItem = null;
+
+        for (DeviceItem newDeviceItem : mBTDevicesArrayList) {
+            if (sortedDevice.getDeviceUuid().equals(newDeviceItem.getAddress())) {
+                deviceItem = newDeviceItem;
+            }
+        }
 
         // If you want to select a single device
         if (buttonTitle.equals("Groups") || buttonTitle.equals("")) {
@@ -786,9 +800,14 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                 mBTDevicesHashMap.put(newDevice.getAddress(), newDevice);
                 mBTDevicesArrayList.add(newDevice);
 
+                SortedDeviceObject sortedDevice = new SortedDeviceObject();
+                sortedDevice.setDeviceName(newDevice.getName());
+                sortedDevice.setDeviceUuid(newDevice.getAddress());
+
                 boolean addNewFlag = true;
                 for (DeviceObject existingObject : listOfDevices) {
                     if (existingObject.getMacAddress().equals(newDevice.getAddress())) {
+                        sortedDevice.setDeviceName(existingObject.getDeviceName());
                         addNewFlag = false;
                     }
                 }
@@ -798,12 +817,26 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
                     listOfDevices.add(deviceObject);
                     deviceDb.addDevice(deviceObject);
                 }
+
+                sortedDevices.add(sortedDevice);
             }
 
             newDevice = null;
         } else {
 
         }
+
+        sortDevices();
+    }
+
+    public void sortDevices() {
+
+        Collections.sort(sortedDevices, new Comparator<SortedDeviceObject>() {
+            @Override
+            public int compare(SortedDeviceObject t1, SortedDeviceObject t2) {
+                return t1.getDeviceName().compareTo(t2.getDeviceName());
+            }
+        });
 
         adapter.notifyDataSetChanged();
     }
@@ -819,6 +852,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         mBTDevicesArrayList.clear();
         mBTDevicesHashMap.clear();
+        sortedDevices.clear();
 
         adapter.notifyDataSetChanged();
 

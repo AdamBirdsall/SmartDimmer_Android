@@ -348,6 +348,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
                                          BluetoothGattCharacteristic
                                                  characteristic, int status) {
             Log.i("onCharacteristicRead", characteristic.toString());
+            gatt.close();
             gatt.disconnect();
         }
     };
