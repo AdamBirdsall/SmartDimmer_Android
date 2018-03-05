@@ -536,23 +536,29 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             case R.id.setup_disconnect_button:
                 Utils.toast(getApplicationContext(), "Disconnecting..");
 
-                mBLTLeScanner.writeCustomCharacteristic(0, false, deviceDb, true);
+                boolean temp = mBLTLeScanner.writeToSetupDevice(0);
 
-                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(renameTextEdit.getWindowToken(), 0);
+                if (temp) {
+                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(renameTextEdit.getWindowToken(), 0);
 
-                // Update the name of the device
-                mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
+                    // Update the name of the device
+                    mBLTLeScanner.updateDeviceName(renameTextEdit.getText().toString(), deviceDb);
 
-                mBLTLeScanner.disconnectFromDevice(false, null, true);
-                mainBleGatt = false;
+                    mBLTLeScanner.disconnectFromDevice(false, null, true);
+                    mainBleGatt = false;
+
+                    System.out.println("SUCCESS");
+                } else {
+                    System.out.println("FAILED");
+                }
 
                 break;
             case R.id.lowest_button:
-                mBLTLeScanner.writeCustomCharacteristic(202, false, deviceDb, true);
+                mBLTLeScanner.writeToSetupDevice(202);
                 break;
             case R.id.highest_button:
-                mBLTLeScanner.writeCustomCharacteristic(201, false, deviceDb, true);
+                mBLTLeScanner.writeToSetupDevice(201);
                 break;
             default:
                 break;

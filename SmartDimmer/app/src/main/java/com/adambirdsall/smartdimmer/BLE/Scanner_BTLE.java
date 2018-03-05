@@ -443,6 +443,29 @@ public class Scanner_BTLE extends DiscoveryActivity {
         switchClicked = false;
     }
 
+    public boolean writeToSetupDevice(int value) {
+        if (mBluetoothGatt == null) {
+            return false;
+        }
+
+        if (mBluetoothService == null) {
+            mBluetoothService = mBluetoothGatt.getService(serviceUUID);
+        }
+
+        if (writeCharacteristic == null) {
+            writeCharacteristic = mBluetoothService.getCharacteristic(writeUUID);
+        }
+
+        writeCharacteristic.setValue(value, android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+
+        if(!mBluetoothGatt.writeCharacteristic(writeCharacteristic)) {
+            return false;
+        } else {
+            System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
+            return true;
+        }
+    }
+
     /**
      * SQL functions to update values
      */
