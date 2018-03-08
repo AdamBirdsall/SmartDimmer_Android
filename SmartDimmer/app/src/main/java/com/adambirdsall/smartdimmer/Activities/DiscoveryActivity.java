@@ -97,7 +97,7 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
     private SwipeRefreshLayout swipeRefreshLayout;
     private SwipeRefreshLayout setupSwipeRefresh;
     private DrawerLayout mainDrawer;
-    private Switch onOffSwitch;
+    public Switch onOffSwitch;
     private FloatingActionButton fab;
     public ImageView titleImageView;
 
@@ -598,7 +598,15 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             if (setupFlag) {
                 mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), false, deviceDb, true);
             } else {
+                stepSeekBar.setOnSeekBarChangeListener(null);
+                onOffSwitch.setOnCheckedChangeListener(null);
+
                 mBLTLeScanner.connectToDevice(deviceItem.getBluetoothDevice(), false, deviceDb, false);
+
+                parent.getChildAt(position).setBackgroundColor(Color.parseColor("#bee2f3"));
+
+                stepSeekBar.setOnSeekBarChangeListener(this);
+                onOffSwitch.setOnCheckedChangeListener(this);
             }
         }
         // If you want to select multiple devices
@@ -644,6 +652,36 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             } else { // Else if the title is 'Connect'
 
                 if (mBLTLeScanner.groupOfDevices.size() > 0) {
+
+                    listOfDevices.clear();
+                    listOfDevices = deviceDb.getAllDevices();
+
+                    int sliderValue = 0;
+
+                    for (BluetoothGatt bluetoothGatt : mBLTLeScanner.groupOfDevices) {
+                        for (DeviceObject deviceObject : listOfDevices) {
+                            if (bluetoothGatt.getDevice().getAddress().equals(deviceObject.getMacAddress())) {
+                                if (Integer.parseInt(deviceObject.getBrightnessValue()) > sliderValue) {
+
+                                    onOffSwitch.setOnCheckedChangeListener(null);
+                                    stepSeekBar.setOnSeekBarChangeListener(null);
+
+                                    sliderValue = Integer.parseInt(deviceObject.getBrightnessValue());
+                                    stepSeekBar.setProgress(Integer.parseInt(deviceObject.getBrightnessValue()) / 10);
+                                    brightnessLabel.setText(sliderValue + "%");
+                                    if (sliderValue > 0) {
+                                        onOffSwitch.setChecked(true);
+                                    } else {
+                                        onOffSwitch.setChecked(false);
+                                    }
+
+                                    onOffSwitch.setOnCheckedChangeListener(this);
+                                    stepSeekBar.setOnSeekBarChangeListener(this);
+                                }
+                            }
+                        }
+                    }
+
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                     fab.setVisibility(View.INVISIBLE);
                 } else {
@@ -681,9 +719,9 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
             case R.id.nav_discover:
                 fragment = new DiscoveryFragment();
                 break;
-            case R.id.nav_help:
-                fragment = new HelpFragment();
-                break;
+//            case R.id.nav_help:
+//                fragment = new HelpFragment();
+//                break;
             case R.id.nav_setup:
                 fragment = new SetupFragment();
                 break;
@@ -731,10 +769,12 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         try {
 
-            //TODO: groups button rename
+            // If it is a single device
             if (buttonTitle.equals("Groups")) {
                 mBLTLeScanner.writeCustomCharacteristic(progress * 10, false, deviceDb, false);
-            } else {
+            }
+            // Else If you are connected to a group
+            else {
                 mBLTLeScanner.writeCustomCharacteristic(progress * 10, true, deviceDb, false);
             }
         } catch (Exception e) {

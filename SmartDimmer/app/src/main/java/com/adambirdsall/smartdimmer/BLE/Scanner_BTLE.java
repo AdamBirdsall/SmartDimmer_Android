@@ -276,6 +276,28 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
                 mBluetoothGatt = bluetoothDevice.connectGatt(this, true, btleGattCallback);
                 scanLeDevice(false);// will stop after first device detection
+
+
+                DeviceObject updateDevice = deviceDb.getDevice(bluetoothDevice.getAddress());
+
+                final int progressInt = Integer.parseInt(updateDevice.getBrightnessValue());
+
+                ma.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (progressInt > 0) {
+                            String brightnessValue = progressInt + "%";
+                            ma.brightnessLabel.setText(brightnessValue);
+                            ma.stepSeekBar.setProgress(progressInt / 10);
+                            ma.onOffSwitch.setChecked(true);
+                        } else {
+                            String brightnessValue = "0%";
+                            ma.brightnessLabel.setText(brightnessValue);
+                            ma.stepSeekBar.setProgress(ma.stepSeekBar.getMin());
+                            ma.onOffSwitch.setChecked(false);
+                        }
+                    }
+                });
             }
         }
     }
@@ -504,6 +526,7 @@ public class Scanner_BTLE extends DiscoveryActivity {
     public void updateSwitchBrightness(boolean isGroups, DeviceDatabase deviceDb, boolean isOn) {
 
         switchClicked = true;
+        int sliderValue = 0;
 
         if (isGroups) {
 
@@ -512,7 +535,6 @@ public class Scanner_BTLE extends DiscoveryActivity {
                 for (BluetoothGatt groupDevice : groupOfDevices) {
 
                     DeviceObject updateDevice = deviceDb.getDevice(groupDevice.getDevice().getAddress());
-
 
                     BluetoothGattService tempService = groupDevice.getService(serviceUUID);
                     BluetoothGattCharacteristic tempCharacteristic = tempService.getCharacteristic(writeUUID);
@@ -523,6 +545,22 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
                     } else {
                         System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
+
+                        if (Integer.parseInt(updateDevice.getPreviousValue()) > sliderValue) {
+                            sliderValue = Integer.parseInt(updateDevice.getPreviousValue());
+
+                            final int writeValue = sliderValue;
+
+                            ma.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String brightnessValue = String.valueOf(writeValue) + "%";
+                                    ma.brightnessLabel.setText(brightnessValue);
+                                    ma.stepSeekBar.setProgress(writeValue/10);
+                                }
+                            });
+                        }
+                        updateDevice(groupDevice.getDevice(), Integer.parseInt(updateDevice.getPreviousValue()), deviceDb);
                     }
                 }
 
@@ -538,6 +576,16 @@ public class Scanner_BTLE extends DiscoveryActivity {
 
                     } else {
                         System.out.println("SUCCESSFULLY WROTE TO CHARACTERISTIC");
+
+                        ma.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                String brightnessValue = "0%";
+                                ma.brightnessLabel.setText(brightnessValue);
+                                ma.stepSeekBar.setProgress(ma.stepSeekBar.getMin());
+                            }
+                        });
+                        updateDevice(groupDevice.getDevice(), 0, deviceDb);
                     }
                 }
             }
