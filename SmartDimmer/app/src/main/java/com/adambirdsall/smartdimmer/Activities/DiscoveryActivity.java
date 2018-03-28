@@ -157,7 +157,18 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+
+                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Allow Location");
+                builder.setMessage("In order to search BLE devices, you need to allow location.");
+                builder.setPositiveButton(android.R.string.ok, null);
+                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+                    }
+                });
+                builder.show();
             } else {
                 setDiscoverVariables();
             }
@@ -206,6 +217,12 @@ public class DiscoveryActivity extends AppCompatActivity implements EventListene
 
         onOffSwitch = (Switch) findViewById(R.id.switch_on_off);
         onOffSwitch.setOnCheckedChangeListener(this);
+
+        try {
+            mainToolbar.removeView(titleImageView);
+        } catch (Exception e) {
+            Log.d("Exception: ", e.getLocalizedMessage());
+        }
 
         mainToolbar.addView(titleImageView);
 
