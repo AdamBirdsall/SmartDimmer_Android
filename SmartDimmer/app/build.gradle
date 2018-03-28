@@ -4,11 +4,11 @@ android {
     compileSdkVersion 26
     buildToolsVersion "25.0.3"
     defaultConfig {
-        applicationId "com.adambirdsall.smartdimmer"
+        applicationId "com.brillianceled.smartdimmer"
         minSdkVersion 23
         targetSdkVersion 26
-        versionCode 3
-        versionName "1.2.0"
+        versionCode 1
+        versionName "1.2.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
